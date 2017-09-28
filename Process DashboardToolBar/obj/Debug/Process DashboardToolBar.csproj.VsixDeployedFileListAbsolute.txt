@@ -1,0 +1,11 @@
+C:\Users\vksingh\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Singh, Vinay K\Process_DashboardToolBar\1.0\\Process DashboardToolBar.dll
+C:\Users\vksingh\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Singh, Vinay K\Process_DashboardToolBar\1.0\\Process DashboardToolBar.pdb
+C:\Users\vksingh\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Singh, Vinay K\Process_DashboardToolBar\1.0\\Newtonsoft.Json.dll
+C:\Users\vksingh\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Singh, Vinay K\Process_DashboardToolBar\1.0\\Refit.dll
+C:\Users\vksingh\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Singh, Vinay K\Process_DashboardToolBar\1.0\\Process DashboardToolBar.pkgdef
+C:\Users\vksingh\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Singh, Vinay K\Process_DashboardToolBar\1.0\\extension.vsixmanifest
+C:\Users\vksingh\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Singh, Vinay K\Process_DashboardToolBar\1.0\\System.Net.Http.Formatting.dll
+C:\Users\vksingh\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Singh, Vinay K\Process_DashboardToolBar\1.0\\System.Runtime.InteropServices.RuntimeInformation.dll
+C:\Users\vksingh\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Singh, Vinay K\Process_DashboardToolBar\1.0\\System.Web.Http.dll
+C:\Users\vksingh\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Singh, Vinay K\Process_DashboardToolBar\1.0\\System.Web.Http.WebHost.dll
+C:\Users\vksingh\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Singh, Vinay K\Process_DashboardToolBar\1.0\\System.Text.Encodings.Web.dll
