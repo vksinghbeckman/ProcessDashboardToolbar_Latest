@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Process_DashboardToolBar
 {
+    /// <summary>
+    /// This is the Command List Based on the Buttons
+    /// </summary>
     enum PkgCmdIDList
     {
         cmdidPause = 0x100,
