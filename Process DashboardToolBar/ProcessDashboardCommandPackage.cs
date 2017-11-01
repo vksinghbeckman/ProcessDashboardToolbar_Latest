@@ -1,5 +1,5 @@
 ﻿//------------------------------------------------------------------------------
-// <copyright file="ProcessDashboardCommandPackage.cs" company="Beckmann Coulter">
+// <copyright file="ProcessDashboardCommandPackage.cs" company="Beckman Coulter">
 //     Copyright (c) Company.  All rights reserved.
 // </copyright>
 //------------------------------------------------------------------------------
@@ -331,6 +331,9 @@ namespace Process_DashboardToolBar
 
                     //Get the Task List Information from the Project 
                     GetTaskListInformation();
+
+                    //Get the Current Active Task and Update the UI Once the Project Name Changed By the User
+                    GetAndSetCurrentActiveTaskOnProjectChange();
                 }
                 
             }
@@ -420,6 +423,9 @@ namespace Process_DashboardToolBar
 
                 //Update the Timer Controls
                 UpdateTimerControls(true);
+
+                //Update the Button State Based on the Timer Status
+                ClearAndUpdateTimersStateOnSelectionChange();
             }
 
         }
@@ -698,6 +704,9 @@ namespace Process_DashboardToolBar
 
              //Upate the Finish Button State
             UpdateTheFinishButtonStateOnCommandClick();
+
+            //Clear the Timer State and Update the Same on Startup
+            ClearAndUpdateTimersStateOnSelectionChange();
         }
 
         /// <summary>
@@ -806,6 +815,9 @@ namespace Process_DashboardToolBar
 
                     //Update the Complete Button Status on Startup
                     UpdatetheCompleteButtonStateOnCompleteTime(timerResponse.Timer.ActiveTask.CompletionDate.ToString());
+
+                    //Clear the Timer State and Update the Same on Startup
+                    ClearAndUpdateTimersStateOnSelectionChange();
                 }
 
             }
@@ -1024,6 +1036,100 @@ namespace Process_DashboardToolBar
         }
 
         /// <summary>
+        /// Update the Button States Once the Task is Changed From The Task List
+        /// </summary>
+        private async void ClearAndUpdateTimersStateOnSelectionChange()
+        {
+            try
+            {
+                //Get the Selected Project Information from the Rest API
+                IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
+
+                //Get the Timer State
+                TimerApiResponse timerResponse = await pdashApi.GetTimerState();
+
+                //Check the Timer Response
+                if (timerResponse != null)
+                {
+                    //Based on the State of the Timer State, Set the Play and Pause Button
+                    if(timerResponse.Timer.Timing == true)
+                    {
+                        _pauseButton.Checked = false;
+                        _playButton.Checked = true;
+                        _playButton.Enabled = true;
+                    }
+                    else
+                    {
+                       
+                        _pauseButton.Checked = true;
+                        _playButton.Checked = false;
+                        _playButton.Enabled = true;
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                //Handle the Exception
+                Console.WriteLine(ex.ToString());
+
+                //Update the UI Controls
+                UpdateUIControls(false);
+            }
+        }
+
+        /// <summary>
+        /// Get the Current Task Once Project Changes and Set the Same 
+        /// </summary>
+        private async void GetAndSetCurrentActiveTaskOnProjectChange()
+        {           
+            try
+            {
+                string strCurrentTask = string.Empty;
+                //Get the Selected Project Information from the Rest API
+                IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
+
+                //Get the Timer State
+                TimerApiResponse timerResponse = await pdashApi.GetTimerState();
+
+                //Check the Timer Response
+                if (timerResponse != null)
+                {
+                    //Get the Current Task Full Name
+                    strCurrentTask = timerResponse.Timer.ActiveTask.FullName;
+                    
+                    //Set the Current Active Task On Project Change
+                    SetCurrentActiveTaskAndUpdateUIOnProjectChange(strCurrentTask);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                //Handle the Exception
+                Console.WriteLine(ex.ToString());
+                
+            }
+
+        }
+
+        /// <summary>
+        /// Set the Current Active Task and Update the UI.
+        /// This will Happen Automatically once User Changes the Project Details from the Combo Box
+        /// </summary>
+        /// <param name="strCurrentTaskName">Current Task Name</param>
+        private void SetCurrentActiveTaskAndUpdateUIOnProjectChange(string strCurrentTaskName)
+        {
+            //Current Task Choice
+            _currentTaskChoice = strCurrentTaskName;
+
+            //Update the Timer Controls
+            UpdateTimerControls(true);
+
+            //Update the Button State Based on the Timer Status
+            ClearAndUpdateTimersStateOnSelectionChange();
+        }
+
+        /// <summary>
         /// Update the Finish Button State
         /// </summary>
         /// <param name="bState">State</param>
@@ -1060,6 +1166,7 @@ namespace Process_DashboardToolBar
 
             //Get the Selected Project Information
             GetSelectedProjectInformationOnStartup();
+
         }
         /// <summary>
         /// Start the Process Dashboard Process
