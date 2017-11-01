@@ -1,0 +1,28 @@
+Process Dashboard - logging started at Wed Nov 01 22:40:32 IST 2017
+Oracle Corporation JRE 1.7.0_111; Windows 7
+Using LocalWorkingDirectory[C:\[Data]MyData\[Data]Projects\Process Dashboard\SourceCode\ExampleApps\Process DashboardToolBar\ProcessDashboardToolbar_Latest\Process DashboardToolBar\bin\Debug]
+2017-11-01 22:40:32.231:INFO:oejs.Server:jetty-8.y.z-SNAPSHOT
+2017-11-01 22:40:32.245:INFO:oejs.AbstractConnector:Started LocalConnector@0.0.0.0:0
+2017-11-01 22:40:32.253:INFO:oejs.AbstractConnector:Started SelectChannelConnector@127.0.0.1:2468
+Process Dashboard version 2.4
+Running as user Administrators
+Nov 01, 2017 10:41:06 PM net.sourceforge.processdash.ProcessDashboard quit
+INFO: Successfully saved all data.
+2017-11-01 22:41:06.467:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-01 22:41:06.467:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,file:/C:/Users/vksingh/AppData/Roaming/Process%20Dashboard/Templates/}
+2017-11-01 22:41:06.469:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-01 22:41:06.469:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Users/vksingh/AppData/Roaming/Process%20Dashboard/Templates/api-v0.2.zip!/Templates/}
+2017-11-01 22:41:06.472:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-01 22:41:06.472:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/dashHelp.jar!/Templates/}
+2017-11-01 22:41:06.472:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-01 22:41:06.472:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/dashHelpExt.jar!/Templates/}
+2017-11-01 22:41:06.472:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-01 22:41:06.472:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/extras.jar!/Templates/}
+2017-11-01 22:41:06.472:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-01 22:41:06.472:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/l10nTool.jar!/Templates/}
+2017-11-01 22:41:06.472:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-01 22:41:06.474:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/TeamTools.jar!/Templates/}
+2017-11-01 22:41:06.474:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-01 22:41:06.474:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextMcf{,processdash-mcf:/}
+2017-11-01 22:41:06.477:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-01 22:41:06.477:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/pspdash.jar!/Templates/}

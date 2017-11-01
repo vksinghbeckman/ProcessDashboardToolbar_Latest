@@ -9,6 +9,9 @@ using Newtonsoft.Json;
 
 namespace Process_DashboardToolBar
 {
+    /// <summary>
+    /// This Class is Used to Proces the Rest APU Response
+    /// </summary>
     public class ProcessDashboardRestAPI
     {
         public static T GetRestAPIResponse<T>(string source, string param)

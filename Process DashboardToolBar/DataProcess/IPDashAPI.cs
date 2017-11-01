@@ -38,6 +38,8 @@ namespace Process_DashboardToolBar
     {
         // Get timer state
         [Get("/api/v1/projects/{projectId}/tasks/")]
+
+        //Get Project Task Details
         Task<ProjectTaskDetails> GetProjectTaskDeatails(string projectId);      
     }
 

@@ -97,6 +97,9 @@ namespace Process_DashboardToolBar
         public double actualTime { get; set; }
     }
 
+    /// <summary>
+    /// Task Details API
+    /// </summary>
     public class RootObjectTaskGetDetails
     {
         public TaskDetails task { get; set; }

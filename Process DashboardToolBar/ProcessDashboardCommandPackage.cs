@@ -67,13 +67,16 @@ namespace Process_DashboardToolBar
 
             if (_activityComboList == null)
             {
+                //Create the List for the Project
                 _activityComboList = new List<string>();
             }
 
-            _activityComboList.Add("Enter the Project Details Detail");
+            //Add the Project Details
+            _activityComboList.Add(_displayPDIsNotRunning);
 
             if (_activityTaskList == null)
             {
+                //Create the Task List
                 _activityTaskList = new List<string>();
             }
 
@@ -81,13 +84,17 @@ namespace Process_DashboardToolBar
 
             if (_activeProjectList == null)
             {
+                //Create the Project List
                 _activeProjectList = new List<ProjectIdDetails>();
             }
 
             if (_activeProjectTaskList == null)
             {
+                //Create the Project task List
                 _activeProjectTaskList = new List<ProjectTask>();
-            }             
+            }
+
+            IsProcessDashboardRunning = false;
 
          }
 
@@ -99,12 +106,22 @@ namespace Process_DashboardToolBar
         /// </summary>
         protected override void Initialize()
         {
+            //Initialize the Command Handlers
             InitializeCommandHandlers();
+            
+            //Initialize the Base Initializers      
             base.Initialize();
+
+            //Initialize the Tool Window
             ProcessDashboardToolWindowCommand.Initialize(this);
 
+            //Select the Project Name to Empty
             _currentSelectedProjectName = string.Empty;
+
+            //Get the Project Lidt from the Information
             GetProjectListInformationOnStartup();
+
+            //Get the Selected Project Information
             GetSelectedProjectInformationOnStartup();
         }
         #endregion
@@ -116,6 +133,7 @@ namespace Process_DashboardToolBar
         private void InitializeCommandHandlers()
         {
             var mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+
             if (null == mcs) return;
 
             // Create the command for the menu items.
@@ -154,16 +172,19 @@ namespace Process_DashboardToolBar
                         {
                             case PkgCmdIDList.cmdidPlay:
                                 {
-                                   _playButton = menuItem;                                   
+                                    //Play Button Menu Item
+                                    _playButton = menuItem;                                   
                                 }
                                 break;
                             case PkgCmdIDList.cmdidPause:
                                 {
+                                    //Pause Button Menu Item
                                      _pauseButton = menuItem;                                  
                                 }
                                 break;
                             case PkgCmdIDList.cmdidFinish:
                                 {
+                                    //Finish Button Menu Item
                                    _finishButton = menuItem;       
                                 }
                                 break;
@@ -173,6 +194,7 @@ namespace Process_DashboardToolBar
                         }
                         break;
                 }
+                //Add the Command for Menu Item to the List
                 mcs.AddCommand(menuItem);
             }
         }
@@ -186,21 +208,29 @@ namespace Process_DashboardToolBar
         {
             try
             {
+                //Check the Selected Command Id
                 switch ((PkgCmdIDList)((MenuCommand)sender).CommandID.ID)
                 {
                     case PkgCmdIDList.cmdidPlay:
                         {
-                            ProcessTimerPlayCommand();                            
+                            //Play Commamd 
+                            ProcessTimerPlayCommand();
                         }
                         break;
                     case PkgCmdIDList.cmdidPause:
                         {
-                            ProcessTimerPauseCommand();                            
+                            //Pause Command
+                            ProcessTimerPauseCommand();
+                           
                         }
                         break;
                     case PkgCmdIDList.cmdidFinish:
                         {
-                           ProcessTimerFinishCommand();                           
+                            //Finish Command
+                            ProcessTimerFinishCommand();
+
+                            //Update the Finish Button on Finish Button Click
+                            UpdateTheButtonStateOnButtonCommandClick();
                         }
                         break;                   
                     default:
@@ -209,6 +239,7 @@ namespace Process_DashboardToolBar
             }
             catch (Exception ex)
             {
+                //Display the Message Box for NULL
                 MessageBox.Show(null, ex.ToString(), "Process DashboardToolbar");
             }
            
@@ -239,6 +270,8 @@ namespace Process_DashboardToolBar
             {
                 // Was a valid new value selected or typed in?
                 var newChoice = input.ToString();
+                
+                //Check for NULL
                 if (string.IsNullOrEmpty(newChoice))
                     return;
 
@@ -249,11 +282,40 @@ namespace Process_DashboardToolBar
 
                 var splitChoice = newChoice.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries); // Assume first is ID
 
-                _currentSelectedProjectName = newChoice;
+                //Check if the Display PD Is Not Running
+                if(newChoice == _displayPDIsNotRunning)
+                {
+                    //First Update the Details on the Process Startup
+                    UpdateDetailsOnDashboardProcessStartUp();
+                    
+                    //Update the Project Details on Running Status
+                    if (IsProcessDashboardRunning == false)
+                    {
+                        // Display the Message and Start the Dashboard Process
+                        StartProcessDashboardProcess();
+                    }
+                   
+                }
+                else if(newChoice == _displayUpdateDetails)
+                {
+                    //Update the Details on Process Startup
+                    UpdateDetailsOnDashboardProcessStartUp();
+                }
+                else
+                {
+                    //Select the Project Name
+                    _currentSelectedProjectName = newChoice;
 
-                UpdateCurrentSelectedProject(newChoice);           
-                _currentTaskChoice = "";
-                GetTaskListInformation();
+                    //Update the Selected Project Information
+                    UpdateCurrentSelectedProject(newChoice);
+
+                    //Set the Current Task Choice to NULL        
+                    _currentTaskChoice = "";
+
+                    //Get the Task List Information from the Project 
+                    GetTaskListInformation();
+                }
+                
             }
             
         }
@@ -334,10 +396,13 @@ namespace Process_DashboardToolBar
 
                 _currentTaskChoice = newChoice;
 
+                //Set the Task List Infor
                 UpdateTaskListInfo(newChoice);
 
+                //Set the Active Task ID
                 ProcessSetActiveTaskID();
 
+                //Update the Timer Controls
                 UpdateTimerControls(true);
             }
 
@@ -377,15 +442,23 @@ namespace Process_DashboardToolBar
 
         }
 
+        /// <summary>
+        /// Query Status Call Back for the Pause Button
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BeforeQueryStatusCallbackPauseButton(object sender, EventArgs e)
         {
             var cmd = (OleMenuCommand)sender;
             cmd.Visible = true;
-            cmd.Enabled = true;
-
-          
+            cmd.Enabled = true;          
         }
 
+        /// <summary>
+        /// Query Status Call Back for Play Button
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BeforeQueryStatusCallbackPlayButton(object sender, EventArgs e)
         {
             var cmd = (OleMenuCommand)sender;
@@ -394,6 +467,11 @@ namespace Process_DashboardToolBar
           
         }
 
+        /// <summary>
+        /// Query Status Call Back
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BeforeQueryStatusCallback(object sender, EventArgs e)
         {
             var cmd = (OleMenuCommand)sender;
@@ -401,6 +479,11 @@ namespace Process_DashboardToolBar
             cmd.Enabled = true;                      
         }
 
+        /// <summary>
+        /// Query Statys Call Back
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BeforeQueryStatusCallbackTest(object sender, EventArgs e)
         {
             var cmd = (OleMenuCommand)sender;
@@ -416,16 +499,20 @@ namespace Process_DashboardToolBar
         {
             try
             {
+                //Start the Play Command
                 ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
 
                 IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
 
+                //Update the Parameters
                 var param = new Dictionary<string, object> { { "timing", "true" } , { "activeTaskId", projectTaskInfo.id } };
 
+                //Send the Rest API Command to Change the Timer State
                 TimerApiResponse t2 = await pdashApi.ChangeTimerState(param);
 
                 Console.WriteLine("Play");
 
+                //Update the Button States
                 _pauseButton.Checked = false;
                 _playButton.Checked = true;
                 _playButton.Enabled = true;
@@ -447,13 +534,18 @@ namespace Process_DashboardToolBar
         {
             try
             {
+                //Get the Project Task Information
                 ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
 
+                //Get the Informattion from the Rest API
                 IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
 
+                //Create the Parameters
                 var param = new Dictionary<string, object> {{ "activeTaskId", projectTaskInfo.id } };
 
+                //Update the Timer API Response
                 TimerApiResponse t2 = await pdashApi.ChangeTimerState(param);
+
 
             }
             catch (Exception ex)
@@ -471,10 +563,13 @@ namespace Process_DashboardToolBar
         {
             try
             {
+                //Get the Project List Information on the Startup
                 ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
 
+                //Get the Details from the Rest Services
                 IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
 
+                //Set the Parameters for the Active Task ID
                 var param = new Dictionary<string, object> { { "activeTaskId", projectTaskInfo.id } };
 
                 TimerApiResponse t2 = await pdashApi.ChangeTimerState(param);
@@ -509,6 +604,7 @@ namespace Process_DashboardToolBar
 
                 Console.WriteLine("Pause");
 
+                //Set the Checked Status
                 _playButton.Checked = false;
                 _pauseButton.Checked = true;
                 _pauseButton.Enabled = true;
@@ -518,6 +614,7 @@ namespace Process_DashboardToolBar
             catch(Exception ex)
             {
                 Console.WriteLine(ex.ToString());
+                //Update the UI Controls
                 UpdateUIControls(false);
             }          
 
@@ -536,6 +633,7 @@ namespace Process_DashboardToolBar
                 //Get the Project Task from Rest API Call
                 ITaskListDetails pdashApi = RestService.For<ITaskListDetails>("http://localhost:2468/");
 
+                //Check for NULL Task Completion Date
                 if (projectTaskInfo.completionDate != null)
                 {
                     //Add the Active Task ID
@@ -544,11 +642,13 @@ namespace Process_DashboardToolBar
                     // Change the Project Task State
                     RootObject projectTaskDetail = await pdashApi.ChangeTaskIdDetails(projectTaskInfo.id,param);
 
+                    //Set the Command ID to NULL
                     Console.WriteLine("Completion Date Set to NULL");
 
                 }
                 else
                 {
+                    //Convert the Time Details on the Startup
                     string strTime= DateTime.UtcNow.ToString("o");
                     //Add the Active Task ID
                     var param = new Dictionary<string, object> {{ "completionDate", strTime} };
@@ -570,6 +670,51 @@ namespace Process_DashboardToolBar
         }
 
         /// <summary>
+        /// Update the Task Status On All the Buttons Click
+        /// </summary>
+        private void UpdateTheButtonStateOnButtonCommandClick()
+        {
+            //Get the Task List Information
+            GetTaskListInformation();
+
+            System.Threading.Thread.Sleep(20);
+
+             //Upate the Finish Button State
+            UpdateTheFinishButtonStateOnCommandClick();
+        }
+
+        /// <summary>
+        /// Finish Button State on Command Click
+        /// </summary>
+        private async void UpdateTheFinishButtonStateOnCommandClick()
+        {
+            try
+            {
+                //Get the Selected Project Information from the Rest API
+                IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
+
+                //Get the Timer State
+                TimerApiResponse timerResponse = await pdashApi.GetTimerState();
+                
+                //Check the Timer Response
+                if (timerResponse != null)
+                {
+                    //Update the Complete Button Status on Startup
+                    UpdatetheCompleteButtonStateOnCompleteTime(timerResponse.Timer.ActiveTask.CompletionDate.ToString());
+                }
+
+            }
+            catch (Exception ex)
+            {
+                //Handle the Exception
+                Console.WriteLine(ex.ToString());
+
+                //Update the UI Controls
+                UpdateUIControls(false);
+            }
+        }
+
+        /// <summary>
         /// Get the Projct List Information from Process Dashboard.
         /// Rest API call will Process Dashboard to Get the Data 
         /// </summary>
@@ -577,17 +722,22 @@ namespace Process_DashboardToolBar
         {
             try
             {
+                //Call the Rest API to Get the Project Details
                 IPProjectDetails pdashApi = RestService.For<IPProjectDetails>("http://localhost:2468/");
 
                 ProejctsRootInfo projectInfo = await pdashApi.GetProjectDeatails();
 
                 if (projectInfo != null)
                 {
+                    IsProcessDashboardRunning = true;
+                    //Clear the List 
                     _activityComboList.Clear();
                     _activeProjectList.Clear();
 
+                    //Add the Project and Items in a List
                     foreach (var item in projectInfo.projects)
                     {
+                        //Add the Items in the List
                         _activityComboList.Add(item.name);
                         _activeProjectList.Add(item);
                     }
@@ -596,6 +746,7 @@ namespace Process_DashboardToolBar
             }
             catch (Exception ex)
             {
+                IsProcessDashboardRunning = false;
                 Console.WriteLine(ex.ToString());
                 UpdateUIControls(false);
             }
@@ -608,26 +759,33 @@ namespace Process_DashboardToolBar
         {
             try
             {
+                //Get the Selected Project Information from the Rest API
                 IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
 
                 TimerApiResponse timerResponse = await pdashApi.GetTimerState();
 
                 if (timerResponse != null)
                 {
+                    //Get the Selected Project Name
                     _currentSelectedProjectName = timerResponse.Timer.ActiveTask.Project.Name;
 
+                    //Update the Selected Project Status
                     UpdateCurrentSelectedProject(_currentSelectedProjectName);
                    
+                    //Get the Task List Information
                     GetTaskListInformation();
 
                     _currentTaskChoice =  timerResponse.Timer.ActiveTask.FullName;
 
                     UpdateTaskListInfo(_currentTaskChoice);
 
+                    //Process the Startup Active ID
                     ProcessSetActiveTaskID();
 
+                    //Update the Timer Controls to True
                     UpdateTimerControls(true);
 
+                    //Update the Complete Button Status on Startup
                     UpdatetheCompleteButtonStateOnCompleteTime(timerResponse.Timer.ActiveTask.CompletionDate.ToString());
                 }
 
@@ -653,13 +811,19 @@ namespace Process_DashboardToolBar
                     //Get the Project Task from Rest API Call
                     IPProjectTaskDetails pdashApi = RestService.For<IPProjectTaskDetails>("http://localhost:2468/");
 
+                    //Get the Project ID Details
                     ProjectIdDetails projectDetails = _activeProjectList.Find(x => x.name ==_currentSelectedProjectName);
 
+                    //Get teh Project Task Info
                     ProjectTaskDetails projectTaskInfo = await pdashApi.GetProjectTaskDeatails(projectDetails.id);
 
+                    //Get the Project Task Information
                     if (projectTaskInfo != null)
                     {
+                        //Clear the Task List
                         _activityTaskList.Clear();
+
+                        //Clear the Project Task List
                         _activeProjectTaskList.Clear();
 
                         foreach (var item in projectTaskInfo.projectTasks)
@@ -671,10 +835,12 @@ namespace Process_DashboardToolBar
                         //Enable Disable the UI Controls
                         if(projectTaskInfo.projectTasks.Count == 0)
                         {
+                            //Update the UI Controls
                             UpdateUIControls(false);
                         }
                         else
                         {
+                            //Update the UI Controls
                             UpdateUIControls(true);
                         }
           
@@ -683,6 +849,7 @@ namespace Process_DashboardToolBar
                 }
                 catch (Exception ex)
                 {
+                    //Log the Exception
                     Console.WriteLine(ex.ToString());
                     UpdateUIControls(false);
                 }
@@ -705,6 +872,7 @@ namespace Process_DashboardToolBar
             }
             _activityTaskList.Insert(0, currentTask);
 
+            //Update the Complete Task Status
             UpdatetheCompleteTaskStatus(currentTask);
            
         }
@@ -793,6 +961,7 @@ namespace Process_DashboardToolBar
         {
             if(bState == false)
             {
+                
                 projectTaskListComboBox.Enabled = false;
                 _playButton.Enabled = false;
                 _pauseButton.Enabled = false;
@@ -811,15 +980,17 @@ namespace Process_DashboardToolBar
         /// <param name="bState">Property State</param>
         private void UpdateTimerControls(bool bState)
         {
+            //Check the State Information
             if (bState == false)
             {
+                //Update the Button States
                 _playButton.Enabled = false;
                 _pauseButton.Enabled = false;
                 _finishButton.Enabled = false;               
             }
             else
             {
-
+                //Update the Button States
                 _playButton.Visible = true;
                 _pauseButton.Visible = true;
                 _finishButton.Visible = true;
@@ -832,19 +1003,67 @@ namespace Process_DashboardToolBar
             }
         }
 
-
+        /// <summary>
+        /// Update the Finish Button State
+        /// </summary>
+        /// <param name="bState">State</param>
         private void UpdateFinishButtonState(bool bState)
         {
+            //Set the Status
             if(bState == false)
             {
+                //Update the Finish Button State
                 _finishButton.Text = "Not Finished";
             }
             else
             {
+                //Update the Button State
                 _finishButton.Text = "Completed";
                 _finishButton.Enabled = true;
             }
             
+        }
+        #endregion
+
+        #region Start process
+
+        /// <summary>
+        /// Update the Details on Process Dashboad StartUp
+        /// </summary>
+        private void UpdateDetailsOnDashboardProcessStartUp()
+        {
+            //Select the Project Name to Empty
+            _currentSelectedProjectName = string.Empty;
+
+            //Get the Project Lidt from the Information
+            GetProjectListInformationOnStartup();
+
+            //Get the Selected Project Information
+            GetSelectedProjectInformationOnStartup();
+        }
+        /// <summary>
+        /// Start the Process Dashboard Process
+        /// </summary>
+        private void StartProcessDashboardProcess()
+        {
+            Process myProcess = new Process();
+
+            try
+            {
+                myProcess.StartInfo.UseShellExecute = false;
+                // You can start any process, HelloWorld is a do-nothing example.
+                myProcess.StartInfo.FileName = @"C:\Program Files (x86)\Process Dashboard\ProcessDashboard.exe";
+                myProcess.StartInfo.CreateNoWindow = false;
+                myProcess.Start();
+                // This code assumes the process you are starting will terminate itself. 
+                // Given that is is started without a window so you cannot terminate it 
+                // on the desktop, it must terminate itself or you can do it programmatically
+                // from this application using the Kill method.
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
 
         #endregion
@@ -871,11 +1090,16 @@ namespace Process_DashboardToolBar
             get { return _currentSelectedProjectName; }
             set { _currentSelectedProjectName = value; }
         }
+        public bool IsProcessDashboardRunning
+        {
+            get { return _processDashboardRunStatus; }
+            set { _processDashboardRunStatus = value; }
+        }
+
         #endregion
 
         #region Private Variables
-
-       
+        
 
         private OleMenuCommand _playButton;
         private OleMenuCommand _pauseButton;
@@ -890,8 +1114,13 @@ namespace Process_DashboardToolBar
         private bool _finishButtonStatus;
         private bool _pauseButtonState;
         private bool _playButtonState;
+       
         private string _currentSelectedProjectName;
         private string _currentTaskChoice;
+        private string _displayPDIsNotRunning = "Process Dashboard is not Running. Please Start the Process Dashboard Process";
+        private string _displayUpdateDetails = "Update the Project Details";
+        private bool _processDashboardRunStatus;
+
 
         #endregion
     }
