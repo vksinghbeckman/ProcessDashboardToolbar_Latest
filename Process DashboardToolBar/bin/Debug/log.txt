@@ -1,28 +1,74 @@
-Process Dashboard - logging started at Wed Nov 01 22:40:32 IST 2017
+Process Dashboard - logging started at Thu Nov 02 00:03:26 IST 2017
 Oracle Corporation JRE 1.7.0_111; Windows 7
 Using LocalWorkingDirectory[C:\[Data]MyData\[Data]Projects\Process Dashboard\SourceCode\ExampleApps\Process DashboardToolBar\ProcessDashboardToolbar_Latest\Process DashboardToolBar\bin\Debug]
-2017-11-01 22:40:32.231:INFO:oejs.Server:jetty-8.y.z-SNAPSHOT
-2017-11-01 22:40:32.245:INFO:oejs.AbstractConnector:Started LocalConnector@0.0.0.0:0
-2017-11-01 22:40:32.253:INFO:oejs.AbstractConnector:Started SelectChannelConnector@127.0.0.1:2468
+2017-11-02 00:03:26.614:INFO:oejs.Server:jetty-8.y.z-SNAPSHOT
+2017-11-02 00:03:26.632:INFO:oejs.AbstractConnector:Started LocalConnector@0.0.0.0:0
+2017-11-02 00:03:26.641:INFO:oejs.AbstractConnector:Started SelectChannelConnector@127.0.0.1:2468
 Process Dashboard version 2.4
 Running as user Administrators
-Nov 01, 2017 10:41:06 PM net.sourceforge.processdash.ProcessDashboard quit
+Exception in thread "AWT-EventQueue-0" java.lang.NullPointerException
+	at net.sourceforge.processdash.data.repository.DataRepository.createDataName(DataRepository.java:4154)
+	at net.sourceforge.processdash.hier.ui.HierarchyNavigator$HierMenu.selectNext(HierarchyNavigator.java:517)
+	at net.sourceforge.processdash.hier.ui.HierarchyNavigator$HierMenu.access$300(HierarchyNavigator.java:267)
+	at net.sourceforge.processdash.hier.ui.HierarchyNavigator.selectNext(HierarchyNavigator.java:161)
+	at net.sourceforge.processdash.ui.TaskNavigationSelector.selectNext(TaskNavigationSelector.java:106)
+	at net.sourceforge.processdash.ui.CompletionButton.selectNextTask(CompletionButton.java:118)
+	at net.sourceforge.processdash.ui.CompletionButton.actionPerformed(CompletionButton.java:106)
+	at javax.swing.AbstractButton.fireActionPerformed(Unknown Source)
+	at javax.swing.AbstractButton$Handler.actionPerformed(Unknown Source)
+	at javax.swing.DefaultButtonModel.fireActionPerformed(Unknown Source)
+	at javax.swing.JToggleButton$ToggleButtonModel.setPressed(Unknown Source)
+	at javax.swing.plaf.basic.BasicButtonListener.mouseReleased(Unknown Source)
+	at java.awt.AWTEventMulticaster.mouseReleased(Unknown Source)
+	at java.awt.Component.processMouseEvent(Unknown Source)
+	at javax.swing.JComponent.processMouseEvent(Unknown Source)
+	at java.awt.Component.processEvent(Unknown Source)
+	at java.awt.Container.processEvent(Unknown Source)
+	at java.awt.Component.dispatchEventImpl(Unknown Source)
+	at java.awt.Container.dispatchEventImpl(Unknown Source)
+	at java.awt.Component.dispatchEvent(Unknown Source)
+	at java.awt.LightweightDispatcher.retargetMouseEvent(Unknown Source)
+	at java.awt.LightweightDispatcher.processMouseEvent(Unknown Source)
+	at java.awt.LightweightDispatcher.dispatchEvent(Unknown Source)
+	at java.awt.Container.dispatchEventImpl(Unknown Source)
+	at java.awt.Window.dispatchEventImpl(Unknown Source)
+	at java.awt.Component.dispatchEvent(Unknown Source)
+	at java.awt.EventQueue.dispatchEventImpl(Unknown Source)
+	at java.awt.EventQueue.access$300(Unknown Source)
+	at java.awt.EventQueue$3.run(Unknown Source)
+	at java.awt.EventQueue$3.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(Unknown Source)
+	at java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(Unknown Source)
+	at java.awt.EventQueue$4.run(Unknown Source)
+	at java.awt.EventQueue$4.run(Unknown Source)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(Unknown Source)
+	at java.awt.EventQueue.dispatchEvent(Unknown Source)
+	at java.awt.EventDispatchThread.pumpOneEventForFilters(Unknown Source)
+	at java.awt.EventDispatchThread.pumpEventsForFilter(Unknown Source)
+	at java.awt.EventDispatchThread.pumpEventsForHierarchy(Unknown Source)
+	at java.awt.EventDispatchThread.pumpEvents(Unknown Source)
+	at java.awt.EventDispatchThread.pumpEvents(Unknown Source)
+	at java.awt.EventDispatchThread.run(Unknown Source)
+Saved C:\[Data]MyData\[Data]Projects\Process Dashboard\SourceCode\ExampleApps\Process DashboardToolBar\ProcessDashboardToolbar_Latest\Process DashboardToolBar\bin\Debug\global.dat
+Nov 02, 2017 12:03:57 AM net.sourceforge.processdash.ProcessDashboard quit
 INFO: Successfully saved all data.
-2017-11-01 22:41:06.467:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
-2017-11-01 22:41:06.467:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,file:/C:/Users/vksingh/AppData/Roaming/Process%20Dashboard/Templates/}
-2017-11-01 22:41:06.469:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
-2017-11-01 22:41:06.469:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Users/vksingh/AppData/Roaming/Process%20Dashboard/Templates/api-v0.2.zip!/Templates/}
-2017-11-01 22:41:06.472:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
-2017-11-01 22:41:06.472:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/dashHelp.jar!/Templates/}
-2017-11-01 22:41:06.472:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
-2017-11-01 22:41:06.472:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/dashHelpExt.jar!/Templates/}
-2017-11-01 22:41:06.472:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
-2017-11-01 22:41:06.472:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/extras.jar!/Templates/}
-2017-11-01 22:41:06.472:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
-2017-11-01 22:41:06.472:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/l10nTool.jar!/Templates/}
-2017-11-01 22:41:06.472:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
-2017-11-01 22:41:06.474:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/TeamTools.jar!/Templates/}
-2017-11-01 22:41:06.474:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
-2017-11-01 22:41:06.474:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextMcf{,processdash-mcf:/}
-2017-11-01 22:41:06.477:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
-2017-11-01 22:41:06.477:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/pspdash.jar!/Templates/}
+2017-11-02 00:03:57.336:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-02 00:03:57.337:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,file:/C:/Users/vksingh/AppData/Roaming/Process%20Dashboard/Templates/}
+2017-11-02 00:03:57.340:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-02 00:03:57.340:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Users/vksingh/AppData/Roaming/Process%20Dashboard/Templates/api-v0.2.zip!/Templates/}
+2017-11-02 00:03:57.340:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-02 00:03:57.340:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/dashHelp.jar!/Templates/}
+2017-11-02 00:03:57.341:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-02 00:03:57.341:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/dashHelpExt.jar!/Templates/}
+2017-11-02 00:03:57.341:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-02 00:03:57.341:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/extras.jar!/Templates/}
+2017-11-02 00:03:57.342:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-02 00:03:57.342:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/l10nTool.jar!/Templates/}
+2017-11-02 00:03:57.342:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-02 00:03:57.342:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/TeamTools.jar!/Templates/}
+2017-11-02 00:03:57.343:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-02 00:03:57.343:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextMcf{,processdash-mcf:/}
+2017-11-02 00:03:57.344:INFO:oejsl.ELContextCleaner:javax.el.BeanELResolver purged
+2017-11-02 00:03:57.345:INFO:oejsh.ContextHandler:stopped n.s.p.n.h.WebAppContextLegacy{,jar:file:/C:/Program%20Files%20(x86)/Process%20Dashboard/pspdash.jar!/Templates/}

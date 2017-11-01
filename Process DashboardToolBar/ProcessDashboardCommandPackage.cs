@@ -1,5 +1,5 @@
 ﻿//------------------------------------------------------------------------------
-// <copyright file="ProcessDashboardCommandPackage.cs" company="Company">
+// <copyright file="ProcessDashboardCommandPackage.cs" company="Beckmann Coulter">
 //     Copyright (c) Company.  All rights reserved.
 // </copyright>
 //------------------------------------------------------------------------------
@@ -48,7 +48,7 @@ namespace Process_DashboardToolBar
     [ProvideToolWindow(typeof(ProcessDashboardToolWindow))]
     [ProvideAutoLoad("f1536ef8-92ec-443c-9ed7-fdadf150da82")]
 
-    public sealed class ProcessDashboardCommandPackage : Package
+    public sealed class ProcessDashboardCommandPackage : Package , IDisposable
     {
         /// <summary>
         /// ProcessDashboardCommandPackage GUID string.
@@ -215,13 +215,19 @@ namespace Process_DashboardToolBar
                         {
                             //Play Commamd 
                             ProcessTimerPlayCommand();
+
+                            //Update the Finish Button on CheckBox Selected
+                            UpdateTheButtonStateOnButtonCommandClick();
                         }
                         break;
                     case PkgCmdIDList.cmdidPause:
                         {
                             //Pause Command
                             ProcessTimerPauseCommand();
-                           
+
+                            //Update the Finish Button on Finish Button Click
+                            UpdateTheButtonStateOnButtonCommandClick();
+
                         }
                         break;
                     case PkgCmdIDList.cmdidFinish:
@@ -285,14 +291,25 @@ namespace Process_DashboardToolBar
                 //Check if the Display PD Is Not Running
                 if(newChoice == _displayPDIsNotRunning)
                 {
-                    //First Update the Details on the Process Startup
-                    UpdateDetailsOnDashboardProcessStartUp();
-                    
-                    //Update the Project Details on Running Status
                     if (IsProcessDashboardRunning == false)
                     {
-                        // Display the Message and Start the Dashboard Process
-                        StartProcessDashboardProcess();
+                         // Dialog box with two buttons: yes and no. [3]
+                         DialogResult result = MessageBox.Show(_displayPDStartRequired, _displayPDStartMsgTitle, MessageBoxButtons.YesNo,MessageBoxIcon.Error);
+
+                        if(result == DialogResult.Yes)
+                        {
+                           // Display the Message and Start the Dashboard Process
+                            StartProcessDashboardProcess();
+
+                            //Start the Sync Up Timer
+
+                            StartProjectSyncUpTimer();
+                        }
+                        else
+                        {
+                            //Start the Timer Only
+                            StartProjectSyncUpTimer();
+                        }
                     }
                    
                 }
@@ -677,7 +694,8 @@ namespace Process_DashboardToolBar
             //Get the Task List Information
             GetTaskListInformation();
 
-            System.Threading.Thread.Sleep(20);
+            //Temporary Added to Sync Up the States
+            System.Threading.Thread.Sleep(10);
 
              //Upate the Finish Button State
             UpdateTheFinishButtonStateOnCommandClick();
@@ -1025,7 +1043,7 @@ namespace Process_DashboardToolBar
         }
         #endregion
 
-        #region Start process
+        #region Start process and Sync Up with Timer
 
         /// <summary>
         /// Update the Details on Process Dashboad StartUp
@@ -1064,6 +1082,76 @@ namespace Process_DashboardToolBar
             {
                 Console.WriteLine(e.Message);
             }
+        }
+
+        /// <summary>
+        /// Start the Sync Up Timer
+        /// </summary>
+        private void StartProjectSyncUpTimer()
+        {
+            try
+            {
+                if (_syncUpTimer == null)
+                {
+                    _syncUpTimer = new Timer();
+                }
+                _syncUpTimer.Interval = _syncUpTimerInterval;
+                _syncUpTimer.Enabled = true;
+                _syncUpTimer.Tick += new System.EventHandler(OnTimerEvent);
+            }
+
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+           
+        }
+        /// <summary>
+        /// Stop the Sync Up Timer
+        /// </summary>
+        private void StopProjectSyncUpTimer()
+        {
+            try
+            {
+                //Check for Null Object
+                if (_syncUpTimer != null)
+                {
+                    _syncUpTimer.Enabled = false;
+                    _syncUpTimer.Stop();
+                    _syncUpTimer = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+           
+        }
+        /// <summary>
+        /// Event to Receive the Timer Event
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnTimerEvent(object sender, EventArgs e)
+        {
+            //Get the Project Lidt from the Information
+            GetProjectListInformationOnStartup();
+
+            //Check if the Process Dashboard is Running and Alive
+            if(IsProcessDashboardRunning == true)
+            {
+                StopProjectSyncUpTimer();
+                UpdateDetailsOnDashboardProcessStartUp();                
+            }
+        }
+
+        /// <summary>
+        /// Dispose Interface for Disposing the Object
+        /// </summary>
+        public void Dispose()
+        {
+            //Stop the Project Sync Up Timer
+            StopProjectSyncUpTimer();
         }
 
         #endregion
@@ -1119,7 +1207,11 @@ namespace Process_DashboardToolBar
         private string _currentTaskChoice;
         private string _displayPDIsNotRunning = "Process Dashboard is not Running. Please Start the Process Dashboard Process";
         private string _displayUpdateDetails = "Update the Project Details";
+        private string _displayPDStartRequired = "Process Dashboard is not Running. Would you like to Start Process Dashboard Process ? Please Click [Yes] for the Same. If Click [No] Please Start the Process Dashboard Application Manually to use the Process Dashboard Toolbar";
+        private string _displayPDStartMsgTitle = "Process Dashboard is Not Running";
         private bool _processDashboardRunStatus;
+        private Timer _syncUpTimer = new Timer();
+        private int _syncUpTimerInterval = 10000;
 
 
         #endregion
