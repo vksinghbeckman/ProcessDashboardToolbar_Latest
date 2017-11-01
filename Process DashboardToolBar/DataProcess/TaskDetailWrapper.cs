@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Process_DashboardToolBarTaskDetails
 {
+    /// <summary>
+    /// Class for Project Information
+    /// </summary>
     public class Project
     {
         public string id { get; set; }
@@ -14,6 +17,9 @@ namespace Process_DashboardToolBarTaskDetails
         public DateTime creationDate { get; set; }
     }
 
+    /// <summary>
+    /// Class for the Task that is Associated with the Project
+    /// </summary>
     public class Task
     {
         public string id { get; set; }
@@ -24,6 +30,9 @@ namespace Process_DashboardToolBarTaskDetails
         public double actualTime { get; set; }
     }
 
+    /// <summary>
+    /// Root Object for the Task Information.
+    /// </summary>
     public class RootObject
     {
         public Task task { get; set; }

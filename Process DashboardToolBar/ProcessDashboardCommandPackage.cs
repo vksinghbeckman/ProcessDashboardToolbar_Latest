@@ -50,6 +50,7 @@ namespace Process_DashboardToolBar
 
     public sealed class ProcessDashboardCommandPackage : Package , IDisposable
     {
+        #region Visual Studio Initialization Related Message
         /// <summary>
         /// ProcessDashboardCommandPackage GUID string.
         /// </summary>
@@ -97,6 +98,7 @@ namespace Process_DashboardToolBar
             IsProcessDashboardRunning = false;
 
          }
+        #endregion
 
         #region Package Members
 
@@ -126,7 +128,7 @@ namespace Process_DashboardToolBar
         }
         #endregion
 
-        #region Menu Item Operations
+        #region Menu Item Operations [Item Call Back and Combo Box Status Check and Query Status for the Commands]
         /// <summary>
         /// Adds our command handlers for menu (commands must exist in the .vsct file).
         /// </summary>
@@ -283,7 +285,9 @@ namespace Process_DashboardToolBar
 
                 // First check to see if Add Defect tool window is dirty and give user a chance to close it.
                 var canClose = false;
+
                 QueryClose(out canClose);
+
                 if (!canClose) return; // Cancels the combo change and reverts back to previous value.
 
                 var splitChoice = newChoice.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries); // Assume first is ID
@@ -313,11 +317,7 @@ namespace Process_DashboardToolBar
                     }
                    
                 }
-                else if(newChoice == _displayUpdateDetails)
-                {
-                    //Update the Details on Process Startup
-                    UpdateDetailsOnDashboardProcessStartUp();
-                }
+               
                 else
                 {
                     //Select the Project Name
@@ -381,7 +381,6 @@ namespace Process_DashboardToolBar
         /// <param name="e"></param>
         private void OnMenuTaskDynamicComboTaskList(object sender, EventArgs e)
         {
-
             var eventArgs = e as OleMenuCmdEventArgs;
             if (eventArgs == null) return;
 
@@ -507,8 +506,8 @@ namespace Process_DashboardToolBar
             cmd.Visible = false;
             cmd.Enabled = false;
         }
-
-
+        #endregion
+        #region Commands Section [Request Information from REST API Server]
         /// <summary>
         /// Timer Play Command
         /// </summary>
@@ -695,7 +694,7 @@ namespace Process_DashboardToolBar
             GetTaskListInformation();
 
             //Temporary Added to Sync Up the States
-            System.Threading.Thread.Sleep(10);
+            System.Threading.Thread.Sleep(20);
 
              //Upate the Finish Button State
             UpdateTheFinishButtonStateOnCommandClick();
@@ -731,7 +730,9 @@ namespace Process_DashboardToolBar
                 UpdateUIControls(false);
             }
         }
+        #endregion
 
+        #region Get Information on Startup Routine Once the Toolbar is Starting Up
         /// <summary>
         /// Get the Projct List Information from Process Dashboard.
         /// Rest API call will Process Dashboard to Get the Data 
@@ -873,8 +874,9 @@ namespace Process_DashboardToolBar
                 }
             }
         }
+        #endregion
 
-       
+        #region Update the Task and Project Status Info
 
         /// <summary>
         /// Manage updating the Task ListInformation
@@ -1091,10 +1093,13 @@ namespace Process_DashboardToolBar
         {
             try
             {
+                //Check for NULL Object State
                 if (_syncUpTimer == null)
                 {
                     _syncUpTimer = new Timer();
                 }
+
+                //Set up The Timer Interval
                 _syncUpTimer.Interval = _syncUpTimerInterval;
                 _syncUpTimer.Enabled = true;
                 _syncUpTimer.Tick += new System.EventHandler(OnTimerEvent);
@@ -1102,6 +1107,7 @@ namespace Process_DashboardToolBar
 
             catch(Exception ex)
             {
+                //Handle the Exception
                 Console.WriteLine(ex.Message);
             }
            
@@ -1158,26 +1164,46 @@ namespace Process_DashboardToolBar
 
         #region Properties
 
+        /// <summary>
+        /// Property to Set and Get the Finish Button State
+        /// </summary>
         public bool FinishButtonState
         {
             get { return _finishButtonStatus; }
             set { _finishButtonStatus = value; }
         }
+
+        /// <summary>
+        /// Property to Set and Get the Play Button State
+        /// </summary>
         public bool PlayButtonState
         {
             get { return _playButtonState; }
             set { _playButtonState = value; }
         }
+
+
+        /// <summary>
+        /// Property to Set and Get the Pause Button State
+        /// </summary>
         public bool PauseButtonState
         {
             get { return _pauseButtonState; }
             set { _pauseButtonState = value; }
         }
+
+        /// <summary>
+        /// Property to Set and Get the Current Combo Choice
+        /// </summary>
         public string CurrentComboBoxChoice
         {
             get { return _currentSelectedProjectName; }
             set { _currentSelectedProjectName = value; }
         }
+
+        /// <summary>
+        /// Property to Get and Set If the Process Dashboard is Running or Not
+        /// </summary>
         public bool IsProcessDashboardRunning
         {
             get { return _processDashboardRunStatus; }
@@ -1186,31 +1212,107 @@ namespace Process_DashboardToolBar
 
         #endregion
 
-        #region Private Variables
-        
-
+        #region Private Variables        
+        /// <summary>
+        /// Play Button Ole Menu Command
+        /// </summary>
         private OleMenuCommand _playButton;
+
+        /// <summary>
+        /// Pause Button Menu Command
+        /// </summary>
         private OleMenuCommand _pauseButton;
+
+        /// <summary>
+        /// Finish Button Menu Command
+        /// </summary>
         private OleMenuCommand _finishButton;
+
+        /// <summary>
+        /// Project Combo List
+        /// </summary>
         private OleMenuCommand _projectComboList;
+
+        /// <summary>
+        /// Project Task Combo List
+        /// </summary>
         private OleMenuCommand projectTaskListComboBox;
+
+        /// <summary>
+        /// Activity Task Combo List
+        /// </summary>
         private List<string> _activityComboList;
+
+        /// <summary>
+        /// Task Combo List
+        /// </summary>
         private List<string> _activityTaskList;
+
+        /// <summary>
+        /// Active Project Task List
+        /// </summary>
         private List<ProjectIdDetails> _activeProjectList;
+
+        /// <summary>
+        /// Active Project Task List [Project Task Inside the Process]
+        /// </summary>
         private List<ProjectTask> _activeProjectTaskList;
         
+        /// <summary>
+        /// Finish Button State
+        /// </summary>
         private bool _finishButtonStatus;
+
+        /// <summary>
+        /// Pause Button State
+        /// </summary>
         private bool _pauseButtonState;
+
+        /// <summary>
+        /// Play Button State
+        /// </summary>
         private bool _playButtonState;
        
+        /// <summary>
+        /// Current Selected Project Name
+        /// </summary>
         private string _currentSelectedProjectName;
+
+        /// <summary>
+        /// Current Task Choice
+        /// </summary>
         private string _currentTaskChoice;
+
+
+        /// <summary>
+        /// Display Message If the Process Dashboard is Not Running
+        /// </summary>
         private string _displayPDIsNotRunning = "Process Dashboard is not Running. Please Start the Process Dashboard Process";
-        private string _displayUpdateDetails = "Update the Project Details";
+
+        /// <summary>
+        /// Display Message that need to be Displayed for Error Related Information
+        /// </summary>
         private string _displayPDStartRequired = "Process Dashboard is not Running. Would you like to Start Process Dashboard Process ? Please Click [Yes] for the Same. If Click [No] Please Start the Process Dashboard Application Manually to use the Process Dashboard Toolbar";
+
+
+        /// <summary>
+        /// Display for the Error Message Related to Message Title
+        /// </summary>
         private string _displayPDStartMsgTitle = "Process Dashboard is Not Running";
+
+        /// <summary>
+        /// Process Dashboard Running Status
+        /// </summary>
         private bool _processDashboardRunStatus;
+
+        /// <summary>
+        /// Sync Up Timer
+        /// </summary>
         private Timer _syncUpTimer = new Timer();
+
+        /// <summary>
+        /// Sync Up Timer Interval
+        /// </summary>
         private int _syncUpTimerInterval = 10000;
 
 
