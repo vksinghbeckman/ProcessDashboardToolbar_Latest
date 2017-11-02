@@ -332,8 +332,12 @@ namespace Process_DashboardToolBar
                     //Get the Task List Information from the Project 
                     GetTaskListInformation();
 
+                    /* To DO Pending -- Need to Check this Logic Once the Project Change
+                    How to Get the Information 
                     //Get the Current Active Task and Update the UI Once the Project Name Changed By the User
                     GetAndSetCurrentActiveTaskOnProjectChange();
+                    */
+                   
                 }
                 
             }
