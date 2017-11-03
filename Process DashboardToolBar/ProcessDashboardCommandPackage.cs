@@ -298,22 +298,13 @@ namespace Process_DashboardToolBar
                     if (IsProcessDashboardRunning == false)
                     {
                          // Dialog box with two buttons: yes and no. [3]
-                         DialogResult result = MessageBox.Show(_displayPDStartRequired, _displayPDStartMsgTitle, MessageBoxButtons.YesNo,MessageBoxIcon.Error);
+                         DialogResult result = MessageBox.Show(_displayPDStartRequired, _displayPDStartMsgTitle, MessageBoxButtons.OK,MessageBoxIcon.Error);
 
-                        if(result == DialogResult.Yes)
+                        if(result == DialogResult.OK)
                         {
-                           // Display the Message and Start the Dashboard Process
-                            StartProcessDashboardProcess();
-
-                            //Start the Sync Up Timer
-
-                            StartProjectSyncUpTimer();
-                        }
-                        else
-                        {
-                            //Start the Timer Only
-                            StartProjectSyncUpTimer();
-                        }
+                            //Try to Get the Data to Sync Up the Process Data
+                            SyncUpProcessDashboardDataOnManualProcessStart();
+                        }                       
                     }
                    
                 }
@@ -1263,6 +1254,21 @@ namespace Process_DashboardToolBar
         }
 
         /// <summary>
+        /// Sync Up the Process Dashboard Once User Start Manually
+        /// </summary>
+        private void SyncUpProcessDashboardDataOnManualProcessStart()
+        {
+            //Get the Project Lidt from the Information
+            GetProjectListInformationOnStartup();
+
+            //Check if the Process Dashboard is Running and Alive
+            if (IsProcessDashboardRunning == true)
+            {
+                UpdateDetailsOnDashboardProcessStartUp();
+            }
+        }
+
+        /// <summary>
         /// Dispose Interface for Disposing the Object
         /// </summary>
         public void Dispose()
@@ -1403,7 +1409,7 @@ namespace Process_DashboardToolBar
         /// <summary>
         /// Display Message that need to be Displayed for Error Related Information
         /// </summary>
-        private string _displayPDStartRequired = "Process Dashboard is not Running. Would you like to Start Process Dashboard Process ? Please Click [Yes] for the Same. If Click [No] Please Start the Process Dashboard Application Manually to use the Process Dashboard Toolbar";
+        private string _displayPDStartRequired = "Process Dashboard is not Running. Please Start the Process Dashboard Application Manually to use the Process Dashboard Toolbar";
 
 
         /// <summary>
