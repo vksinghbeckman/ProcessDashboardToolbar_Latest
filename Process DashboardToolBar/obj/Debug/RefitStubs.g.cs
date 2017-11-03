@@ -83,5 +83,11 @@ namespace Process_DashboardToolBar
             return (Task<RootObject>) methodImpls["ChangeTaskIdDetails"](Client, arguments);
         }
 
+        public virtual Task<PDEventsApiResponse> GetEvents(int after)
+        {
+            var arguments = new object[] { after };
+            return (Task<PDEventsApiResponse>) methodImpls["GetEvents"](Client, arguments);
+        }
+
     }
 }

@@ -1258,6 +1258,76 @@ namespace Process_DashboardToolBar
 
         #endregion
 
+        #region Event Setup
+
+        /// <summary>
+        /// Listen for Process Dashboard Events through Rest API
+        /// </summary>
+        private async void ListenForProcessDashboardEvents()
+        {
+            // if this method is already running in another loop, exit
+            if (_listening)
+                return;
+
+            _listening = true;
+            var errCount = 0;
+            while (errCount < 4)
+            {
+                try
+                {
+                    PDEventsApiResponse resp = await _pDashAPI.GetEvents(_maxEventID);
+                    errCount = 0;
+                    foreach (var evt in resp.events)
+                    {
+                        HandleProcessDashboardSyncEvents(evt);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                    errCount++;
+                    await System.Threading.Tasks.Task.Delay(1000);
+                }
+            }
+            _listening = false;
+
+            // TODO: update UI controls to tell the user that the dashboard is 
+            // no longer running.
+        }
+
+
+        /// <summary>
+        /// Function Callback for Handling the Process Dashboard Sync Events
+        /// </summary>
+        /// <param name="evt"></param>
+        private void HandleProcessDashboardSyncEvents(PDEvent evt)
+        {
+            _maxEventID = evt.id;
+
+            switch (evt.type)
+            {
+                case "timer":
+                    // TODO: update the active project/task and the play/pause state
+                    break;
+
+                case "taskData":
+                    // TODO: refresh the state of the "Completed" button, just in case
+                    break;
+
+                case "hierarchy":
+                    // TODO: update the list of known projects, and the tasks 
+                    // within the current project
+                    break;
+
+                case "taskList":
+                    // TODO: update the list of tasks within the current project
+                    break;
+            }
+        }
+
+
+        #endregion
+
         #region Properties
 
         /// <summary>
@@ -1415,6 +1485,17 @@ namespace Process_DashboardToolBar
         /// Dash API object To Get Information from System
         /// </summary>
         IPDashAPI _pDashAPI = null;
+
+        /// <summary>
+        ///  For Events Multiple
+        /// </summary>
+        private bool _listening = false;
+
+        /// <summary>
+        /// Maximum Event Id Variable
+        /// </summary>
+        private int _maxEventID = 0;
+
 
         #endregion
     }

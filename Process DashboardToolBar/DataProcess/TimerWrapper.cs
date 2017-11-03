@@ -106,5 +106,24 @@ namespace Process_DashboardToolBar
         public string stat { get; set; }
     }
 
+    /// <summary>
+    /// Event Information
+    /// </summary>
+    public class PDEvent
+    {
+        public int id { get; set; }
+        public string type { get; set; }
+    }
+
+    /// <summary>
+    /// Event Response for API Response
+    /// </summary>
+    public class PDEventsApiResponse
+    {
+        public List<PDEvent> events { get; set; }
+        public string nextUri { get; set; }
+        public string stat { get; set; }
+    }
+
 
 }
