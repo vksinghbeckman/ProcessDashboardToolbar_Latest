@@ -20,6 +20,7 @@ using System.Windows.Forms;
 using System.Collections.Generic;
 using Refit;
 using Process_DashboardToolBarTaskDetails;
+using System.Threading;
 
 namespace Process_DashboardToolBar
 {
@@ -110,14 +111,17 @@ namespace Process_DashboardToolBar
         {
             //Initialize the Command Handlers
             InitializeCommandHandlers();
-            
+
+            //Initialize the Rest API Services
+            InitializeRestAPIServices();
+
             //Initialize the Base Initializers      
             base.Initialize();
 
             //Initialize the Tool Window
             ProcessDashboardToolWindowCommand.Initialize(this);
 
-            //Select the Project Name to Empty
+             //Select the Project Name to Empty
             _currentSelectedProjectName = string.Empty;
 
             //Get the Project Lidt from the Information
@@ -126,8 +130,8 @@ namespace Process_DashboardToolBar
             //Get the Selected Project Information
             GetSelectedProjectInformationOnStartup();
 
-            //Initialize the Rest API Services
-            InitializeRestAPIServices();
+            //Start Thread for Process Dashboard Events
+            StartThreadForProcessDashboardEventSync();
         }
 
         private void InitializeRestAPIServices()
@@ -1168,71 +1172,6 @@ namespace Process_DashboardToolBar
         }
 
         /// <summary>
-        /// Start the Sync Up Timer
-        /// </summary>
-        private void StartProjectSyncUpTimer()
-        {
-            try
-            {
-                //Check for NULL Object State
-                if (_syncUpTimer == null)
-                {
-                    _syncUpTimer = new Timer();
-                }
-
-                //Set up The Timer Interval
-                _syncUpTimer.Interval = _syncUpTimerInterval;
-                _syncUpTimer.Enabled = true;
-                _syncUpTimer.Tick += new System.EventHandler(OnTimerEvent);
-            }
-
-            catch(Exception ex)
-            {
-                //Handle the Exception
-                Console.WriteLine(ex.Message);
-            }
-           
-        }
-        /// <summary>
-        /// Stop the Sync Up Timer
-        /// </summary>
-        private void StopProjectSyncUpTimer()
-        {
-            try
-            {
-                //Check for Null Object
-                if (_syncUpTimer != null)
-                {
-                    _syncUpTimer.Enabled = false;
-                    _syncUpTimer.Stop();
-                    _syncUpTimer = null;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-           
-        }
-        /// <summary>
-        /// Event to Receive the Timer Event
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void OnTimerEvent(object sender, EventArgs e)
-        {
-            //Get the Project Lidt from the Information
-            GetProjectListInformationOnStartup();
-
-            //Check if the Process Dashboard is Running and Alive
-            if(IsProcessDashboardRunning == true)
-            {
-                StopProjectSyncUpTimer();
-                UpdateDetailsOnDashboardProcessStartUp();                
-            }
-        }
-
-        /// <summary>
         /// Sync Up the Process Dashboard Once User Start Manually
         /// </summary>
         private void SyncUpProcessDashboardDataOnManualProcessStart()
@@ -1252,14 +1191,42 @@ namespace Process_DashboardToolBar
         /// </summary>
         public void Dispose()
         {
-            //Stop the Project Sync Up Timer
-            StopProjectSyncUpTimer();
-        }
+            //Abort the Thread
+            if (_threadSyncEvents != null)
+            {
+                _threadSyncEvents.Abort();
+                _threadSyncEvents = null;
+            }
+        }                
 
         #endregion
 
-        #region Event Setup
+       #region Event Setup
 
+         /// <summary>
+         /// Function to Start the Thread for Process Dashboard Event Sync
+         /// </summary>
+        private void StartThreadForProcessDashboardEventSync()
+        {
+            //Create the Thread to Receive the Data
+            _threadSyncEvents = new Thread(new ThreadStart(this.ProcessDashboardEventSync));
+
+            //Set the Thread Name
+            _threadSyncEvents.Name = _syncThreadName;
+            _threadSyncEvents.IsBackground = true;
+
+            //Start the Thread
+            _threadSyncEvents.Start();
+        }
+      
+        /// <summary>
+        /// Function to Process the Dashboard Event Sync
+        /// </summary>
+        private void ProcessDashboardEventSync()
+        {
+            //Start Listening for the Events
+            ListenForProcessDashboardEvents();
+        }
         /// <summary>
         /// Listen for Process Dashboard Events through Rest API
         /// </summary>
@@ -1293,7 +1260,9 @@ namespace Process_DashboardToolBar
 
             // TODO: update UI controls to tell the user that the dashboard is 
             // no longer running.
+            UpdateUIControls(false);
         }
+
 
 
         /// <summary>
@@ -1307,11 +1276,13 @@ namespace Process_DashboardToolBar
             switch (evt.type)
             {
                 case "timer":
-                    // TODO: update the active project/task and the play/pause state
+                    // TODO: update the active project/task and the play/pause state   
+                    UpdateTheButtonStateOnButtonCommandClick();
                     break;
 
                 case "taskData":
                     // TODO: refresh the state of the "Completed" button, just in case
+                    UpdateTheButtonStateOnButtonCommandClick();
                     break;
 
                 case "hierarchy":
@@ -1322,7 +1293,11 @@ namespace Process_DashboardToolBar
                 case "taskList":
                     // TODO: update the list of tasks within the current project
                     break;
+                default:
+                    break;
             }
+
+            Console.WriteLine("[HandleProcessDashboardSyncEvents] Data Modified in Process Dashboard = {0}\n", evt.type.ToString());
         }
 
 
@@ -1471,17 +1446,7 @@ namespace Process_DashboardToolBar
         /// </summary>
         private bool _processDashboardRunStatus;
 
-        /// <summary>
-        /// Sync Up Timer
-        /// </summary>
-        private Timer _syncUpTimer = new Timer();
-
-        /// <summary>
-        /// Sync Up Timer Interval
-        /// </summary>
-        private int _syncUpTimerInterval = 10000;
-
-        /// <summary>
+         /// <summary>
         /// Dash API object To Get Information from System
         /// </summary>
         IPDashAPI _pDashAPI = null;
@@ -1495,6 +1460,16 @@ namespace Process_DashboardToolBar
         /// Maximum Event Id Variable
         /// </summary>
         private int _maxEventID = 0;
+
+        /// <summary>
+        /// Thread Object for Process Dashboard Event Sync
+        /// </summary>
+        private Thread _threadSyncEvents = null;
+
+        /// <summary>
+        /// Thread Name
+        /// </summary>
+        private string _syncThreadName = "ProcessDashboardSyncThread";
 
 
         #endregion
