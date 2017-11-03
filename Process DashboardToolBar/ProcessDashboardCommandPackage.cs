@@ -125,6 +125,15 @@ namespace Process_DashboardToolBar
 
             //Get the Selected Project Information
             GetSelectedProjectInformationOnStartup();
+
+            //Initialize the Rest API Services
+            InitializeRestAPIServices();
+        }
+
+        private void InitializeRestAPIServices()
+        {
+            //Initialize the Rest API Services for Dash API
+            _pDashAPI = RestService.For<IPDashAPI>("http://localhost:2468/");
         }
         #endregion
 
@@ -518,14 +527,12 @@ namespace Process_DashboardToolBar
             {
                 //Start the Play Command
                 ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
-
-                IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
-
+             
                 //Update the Parameters
                 var param = new Dictionary<string, object> { { "timing", "true" } , { "activeTaskId", projectTaskInfo.id } };
 
                 //Send the Rest API Command to Change the Timer State
-                TimerApiResponse t2 = await pdashApi.ChangeTimerState(param);
+                TimerApiResponse t2 = await _pDashAPI.ChangeTimerState(param);
 
                 Console.WriteLine("Play");
 
@@ -554,14 +561,11 @@ namespace Process_DashboardToolBar
                 //Get the Project Task Information
                 ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
 
-                //Get the Informattion from the Rest API
-                IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
-
-                //Create the Parameters
+                  //Create the Parameters
                 var param = new Dictionary<string, object> {{ "activeTaskId", projectTaskInfo.id } };
 
                 //Update the Timer API Response
-                TimerApiResponse t2 = await pdashApi.ChangeTimerState(param);
+                TimerApiResponse t2 = await _pDashAPI.ChangeTimerState(param);
 
 
             }
@@ -582,14 +586,11 @@ namespace Process_DashboardToolBar
             {
                 //Get the Project List Information on the Startup
                 ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
-
-                //Get the Details from the Rest Services
-                IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
-
+               
                 //Set the Parameters for the Active Task ID
                 var param = new Dictionary<string, object> { { "activeTaskId", projectTaskInfo.id } };
 
-                TimerApiResponse t2 = await pdashApi.ChangeTimerState(param);
+                TimerApiResponse t2 = await _pDashAPI.ChangeTimerState(param);
 
             }
             catch (Exception ex)
@@ -610,14 +611,11 @@ namespace Process_DashboardToolBar
                 //Get the Current Selected Project Task
                 ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
 
-                //Prepare the Rest Call Service
-                IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
-
-                //Add the Active Task ID
+                 //Add the Active Task ID
                 var param = new Dictionary<string, object> { { "timing", "false" }, { "activeTaskId", projectTaskInfo.id } };
 
                 //Change the Timer State
-                TimerApiResponse t3 = await pdashApi.ChangeTimerState(param);
+                TimerApiResponse t3 = await _pDashAPI.ChangeTimerState(param);
 
                 Console.WriteLine("Pause");
 
@@ -647,9 +645,7 @@ namespace Process_DashboardToolBar
                 //Get the Current Selected Project Task
                 ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
 
-                //Get the Project Task from Rest API Call
-                ITaskListDetails pdashApi = RestService.For<ITaskListDetails>("http://localhost:2468/");
-
+           
                 //Check for NULL Task Completion Date
                 if (projectTaskInfo.completionDate != null)
                 {
@@ -657,7 +653,7 @@ namespace Process_DashboardToolBar
                     var param = new Dictionary<string, object> { { "completionDate", null } };
 
                     // Change the Project Task State
-                    RootObject projectTaskDetail = await pdashApi.ChangeTaskIdDetails(projectTaskInfo.id,param);
+                    RootObject projectTaskDetail = await _pDashAPI.ChangeTaskIdDetails(projectTaskInfo.id,param);
 
                     //Set the Command ID to NULL
                     Console.WriteLine("Completion Date Set to NULL");
@@ -671,7 +667,7 @@ namespace Process_DashboardToolBar
                     var param = new Dictionary<string, object> {{ "completionDate", strTime} };
 
                     // Change the Project Task State
-                    RootObject projectTaskDetail = await pdashApi.ChangeTaskIdDetails(projectTaskInfo.id,param);
+                    RootObject projectTaskDetail = await _pDashAPI.ChangeTaskIdDetails(projectTaskInfo.id,param);
 
                     Console.WriteLine("Completion Date Set to Value = {0}",strTime);
                 }
@@ -711,11 +707,8 @@ namespace Process_DashboardToolBar
         {
             try
             {
-                //Get the Selected Project Information from the Rest API
-                IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
-
-                //Get the Timer State
-                TimerApiResponse timerResponse = await pdashApi.GetTimerState();
+                 //Get the Timer State
+                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
                 
                 //Check the Timer Response
                 if (timerResponse != null)
@@ -745,10 +738,7 @@ namespace Process_DashboardToolBar
         {
             try
             {
-                //Call the Rest API to Get the Project Details
-                IPProjectDetails pdashApi = RestService.For<IPProjectDetails>("http://localhost:2468/");
-
-                ProejctsRootInfo projectInfo = await pdashApi.GetProjectDeatails();
+                 ProejctsRootInfo projectInfo = await _pDashAPI.GetProjectDeatails();
 
                 if (projectInfo != null)
                 {
@@ -782,10 +772,7 @@ namespace Process_DashboardToolBar
         {
             try
             {
-                //Get the Selected Project Information from the Rest API
-                IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
-
-                TimerApiResponse timerResponse = await pdashApi.GetTimerState();
+                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
 
                 if (timerResponse != null)
                 {
@@ -834,14 +821,11 @@ namespace Process_DashboardToolBar
             {
                 try
                 {
-                    //Get the Project Task from Rest API Call
-                    IPProjectTaskDetails pdashApi = RestService.For<IPProjectTaskDetails>("http://localhost:2468/");
-
                     //Get the Project ID Details
                     ProjectIdDetails projectDetails = _activeProjectList.Find(x => x.name ==_currentSelectedProjectName);
 
                     //Get teh Project Task Info
-                    ProjectTaskDetails projectTaskInfo = await pdashApi.GetProjectTaskDeatails(projectDetails.id);
+                    ProjectTaskDetails projectTaskInfo = await _pDashAPI.GetProjectTaskDeatails(projectDetails.id);
 
                     //Get the Project Task Information
                     if (projectTaskInfo != null)
@@ -1037,11 +1021,8 @@ namespace Process_DashboardToolBar
         {
             try
             {
-                //Get the Selected Project Information from the Rest API
-                IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
-
                 //Get the Timer State
-                TimerApiResponse timerResponse = await pdashApi.GetTimerState();
+                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
 
                 //Check the Timer Response
                 if (timerResponse != null)
@@ -1081,11 +1062,9 @@ namespace Process_DashboardToolBar
             try
             {
                 string strCurrentTask = string.Empty;
-                //Get the Selected Project Information from the Rest API
-                IPDashAPI pdashApi = RestService.For<IPDashAPI>("http://localhost:2468/");
-
+              
                 //Get the Timer State
-                TimerApiResponse timerResponse = await pdashApi.GetTimerState();
+                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
 
                 //Check the Timer Response
                 if (timerResponse != null)
@@ -1432,6 +1411,10 @@ namespace Process_DashboardToolBar
         /// </summary>
         private int _syncUpTimerInterval = 10000;
 
+        /// <summary>
+        /// Dash API object To Get Information from System
+        /// </summary>
+        IPDashAPI _pDashAPI = null;
 
         #endregion
     }

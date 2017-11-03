@@ -9,7 +9,7 @@ using Process_DashboardToolBarTaskDetails;
 namespace Process_DashboardToolBar
 {
     /// <summary>
-    /// Infterface for Timer Related Operation on the Process Dashboard
+    /// Infterface for All Rest API Calls on the Process Dashboard
     /// </summary>
     [Headers("Accept: application/json")]
     public interface IPDashAPI
@@ -25,43 +25,20 @@ namespace Process_DashboardToolBar
         // Get details for a particular project
         [Get("/api/v1/projects/{projectId}/")]
         Task<ProjectDetailsApiResponse> GetProjectDetails(string projectId);
-    }
 
-    /// <summary>
-    /// Interface on the Project Related Details on the Project Dashboard
-    /// </summary>
-    [Headers("Accept: application/json")]
-    public interface IPProjectDetails
-    {
         // Get Project Details Information
         [Get("/api/v1/projects/")]
         Task<ProejctsRootInfo> GetProjectDeatails();
-      
-    }
 
-    /// <summary>
-    /// Interface Related to the Project Task Details.
-    /// </summary>
-    [Headers("Accept: application/json")]
-    public interface IPProjectTaskDetails
-    {
         // Get Projects Tasks Based on the Project ID
         [Get("/api/v1/projects/{projectId}/tasks/")]
 
         //Get Project Task Details
-        Task<ProjectTaskDetails> GetProjectTaskDeatails(string projectId);      
-    }
+        Task<ProjectTaskDetails> GetProjectTaskDeatails(string projectId);
 
-    /// <summary>
-    /// Interface related to the Task that are Part of One Project
-    /// </summary>
-    [Headers("Accept: application/json")]
-    public interface ITaskListDetails
-    {
-          // Change the Project Details
+        // Change the Project Details
         [Put("/api/v1/tasks/{taskId}/")]
-        Task<RootObject> ChangeTaskIdDetails(string taskId,[Body(BodySerializationMethod.UrlEncoded)] Dictionary<string, object> param);
-
+        Task<RootObject> ChangeTaskIdDetails(string taskId, [Body(BodySerializationMethod.UrlEncoded)] Dictionary<string, object> param);
     }
-
+    
 }
