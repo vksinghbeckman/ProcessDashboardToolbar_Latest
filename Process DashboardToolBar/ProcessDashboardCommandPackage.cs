@@ -130,8 +130,8 @@ namespace Process_DashboardToolBar
             //Get the Selected Project Information
             GetSelectedProjectInformationOnStartup();
 
-            //Start Thread for Process Dashboard Events
-            StartThreadForProcessDashboardEventSync();
+            //Listen for Process Dashboard Changes
+            ListenForProcessDashboardEvents();
         }
 
         private void InitializeRestAPIServices()
@@ -1191,33 +1191,14 @@ namespace Process_DashboardToolBar
         /// </summary>
         public void Dispose()
         {
-            //Abort the Thread
-            if (_threadSyncEvents != null)
-            {
-                _threadSyncEvents.Abort();
-                _threadSyncEvents = null;
-            }
+            
         }                
 
         #endregion
 
        #region Event Setup
 
-         /// <summary>
-         /// Function to Start the Thread for Process Dashboard Event Sync
-         /// </summary>
-        private void StartThreadForProcessDashboardEventSync()
-        {
-            //Create the Thread to Receive the Data
-            _threadSyncEvents = new Thread(new ThreadStart(this.ProcessDashboardEventSync));
-
-            //Set the Thread Name
-            _threadSyncEvents.Name = _syncThreadName;
-            _threadSyncEvents.IsBackground = true;
-
-            //Start the Thread
-            _threadSyncEvents.Start();
-        }
+    
       
         /// <summary>
         /// Function to Process the Dashboard Event Sync
@@ -1242,6 +1223,7 @@ namespace Process_DashboardToolBar
             {
                 try
                 {
+                    //Get the Events Through Rest APIS Services
                     PDEventsApiResponse resp = await _pDashAPI.GetEvents(_maxEventID);
                     errCount = 0;
                     foreach (var evt in resp.events)
@@ -1460,17 +1442,6 @@ namespace Process_DashboardToolBar
         /// Maximum Event Id Variable
         /// </summary>
         private int _maxEventID = 0;
-
-        /// <summary>
-        /// Thread Object for Process Dashboard Event Sync
-        /// </summary>
-        private Thread _threadSyncEvents = null;
-
-        /// <summary>
-        /// Thread Name
-        /// </summary>
-        private string _syncThreadName = "ProcessDashboardSyncThread";
-
 
         #endregion
     }
