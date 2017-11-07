@@ -639,6 +639,8 @@ namespace Process_DashboardToolBar
                 {
                     if(_currentTaskChoice != timerResponse.Timer.ActiveTask.FullName)
                     {
+                        projectTaskListComboBox.Enabled = false;
+
                         _currentTaskChoice = null;
                         //Get Information from the Project Related to the Tasks
                         GetTaskListInformation();
@@ -654,6 +656,8 @@ namespace Process_DashboardToolBar
 
                         //Update the Button State Based on the Timer Status
                         ClearAndUpdateTimersStateOnSelectionChange();
+
+                        projectTaskListComboBox.Enabled = true;
                     }
                  
                 }
