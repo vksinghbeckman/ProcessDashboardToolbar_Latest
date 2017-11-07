@@ -598,6 +598,7 @@ namespace Process_DashboardToolBar
                     //Check if the Project is Same or Different Selected
                     if(_currentSelectedProjectName != timerResponse.Timer.ActiveTask.Project.Name)
                     {
+                        _projectComboList.Enabled = false;
                         //Clear All the Project
                         GetProjectListInformationOnStartup();
 
@@ -609,7 +610,8 @@ namespace Process_DashboardToolBar
 
                         //Set the Current Task Choice to NULL        
                         _currentTaskChoice = "";
-                        
+
+                        _projectComboList.Enabled = true;
                     }
                    
                 }
@@ -639,6 +641,7 @@ namespace Process_DashboardToolBar
                 {
                     if(_currentTaskChoice != timerResponse.Timer.ActiveTask.FullName)
                     {
+                        //Disable and Enable Done to Update the Combo Box
                         projectTaskListComboBox.Enabled = false;
 
                         _currentTaskChoice = null;
@@ -651,13 +654,15 @@ namespace Process_DashboardToolBar
                         //Set the Task List Infor
                         UpdateTaskListInfo(_currentTaskChoice);
 
+                        //Enable Again to Refresh the UI
+                        projectTaskListComboBox.Enabled = true;
+
                         //Update the Timer Controls
                         UpdateTimerControls(true);
 
                         //Update the Button State Based on the Timer Status
                         ClearAndUpdateTimersStateOnSelectionChange();
-
-                        projectTaskListComboBox.Enabled = true;
+                        
                     }
                  
                 }
