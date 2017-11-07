@@ -117,7 +117,7 @@
         </Strings>
       </Combo>
       
-      <Combo guid="guidProcessDashboardCommandPackageCmdSet" id="cmdProjectDetails" priority="0x10" type="DropDownCombo" idCommandList="cmdidProjectList" defaultWidth="200">
+      <Combo guid="guidProcessDashboardCommandPackageCmdSet" id="cmdProjectDetails" priority="0x10" type="DropDownCombo" idCommandList="cmdidProjectList" defaultWidth="500">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
         <CommandFlag>StretchHorizontally</CommandFlag>
         <Strings>

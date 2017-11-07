@@ -274,7 +274,7 @@ namespace Process_DashboardToolBar
         /// <param name="e"></param>
         private void OnMenuTaskDynamicCombo(object sender, EventArgs e)
         {
-           
+            HandlingResetEvent = false;
             var eventArgs = e as OleMenuCmdEventArgs;
             if (eventArgs == null) return;
 
@@ -289,6 +289,7 @@ namespace Process_DashboardToolBar
             }
             else if (input != null)
             {
+               
                 // Was a valid new value selected or typed in?
                 var newChoice = input.ToString();
                 
@@ -406,6 +407,7 @@ namespace Process_DashboardToolBar
             }
             else if (input != null)
             {
+                HandlingResetEvent = false;
                 // Was a valid new value selected or typed in?
                 var newChoice = input.ToString();
                 if (string.IsNullOrEmpty(newChoice))
@@ -582,6 +584,91 @@ namespace Process_DashboardToolBar
         }
 
         /// <summary>
+        /// Process Ser Active TasK ID
+        /// </summary> 
+        private async void ProcessSetActiveProcessIDBasedOnProjectStat()
+        {         
+            try
+            {
+                //Get the Timer State
+                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
+
+                if(timerResponse != null && timerResponse.Timer.ActiveTask !=null)
+                {
+                    //Check if the Project is Same or Different Selected
+                    if(_currentSelectedProjectName != timerResponse.Timer.ActiveTask.Project.Name)
+                    {
+                        //Clear All the Project
+                        GetProjectListInformationOnStartup();
+
+                        //Select the Project Name
+                        _currentSelectedProjectName = timerResponse.Timer.ActiveTask.Project.Name;
+
+                        //Update the Selected Project Information
+                        UpdateCurrentSelectedProject(_currentSelectedProjectName);
+
+                        //Set the Current Task Choice to NULL        
+                        _currentTaskChoice = "";
+                        
+                    }
+                   
+                }
+               
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                UpdateUIControls(false);
+            }
+
+        }
+
+        /// <summary>
+        /// Process Ser Active TasK ID
+        /// </summary> 
+        private async void ProcessSetActiveTaskIDBasedOnProjectStat()
+        {
+
+            try
+            {
+                //Get the Timer State
+                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
+
+                if (timerResponse != null && timerResponse.Timer.ActiveTask !=null)
+                {
+                    if(_currentTaskChoice != timerResponse.Timer.ActiveTask.FullName)
+                    {
+                        _currentTaskChoice = null;
+                        //Get Information from the Project Related to the Tasks
+                        GetTaskListInformation();
+                        
+                        //Update the Current Task
+                        _currentTaskChoice = timerResponse.Timer.ActiveTask.FullName;
+
+                        //Set the Task List Infor
+                        UpdateTaskListInfo(_currentTaskChoice);
+
+                        //Update the Timer Controls
+                        UpdateTimerControls(true);
+
+                        //Update the Button State Based on the Timer Status
+                        ClearAndUpdateTimersStateOnSelectionChange();
+                    }
+                 
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                UpdateUIControls(false);
+            }
+
+        }
+
+        /// <summary>
         /// Process Finish Button State
         /// </summary>
         private async void ProcessAndUpdateCompleteButtonStatus()
@@ -715,7 +802,7 @@ namespace Process_DashboardToolBar
                 TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
                 
                 //Check the Timer Response
-                if (timerResponse != null)
+                if (timerResponse != null && timerResponse.Timer.ActiveTask !=null)
                 {
                     //Update the Complete Button Status on Startup
                     UpdatetheCompleteButtonStateOnCompleteTime(timerResponse.Timer.ActiveTask.CompletionDate.ToString());
@@ -742,7 +829,7 @@ namespace Process_DashboardToolBar
         {
             try
             {
-                 ProejctsRootInfo projectInfo = await _pDashAPI.GetProjectDeatails();
+                ProejctsRootInfo projectInfo = await _pDashAPI.GetProjectDeatails();
 
                 if (projectInfo != null)
                 {
@@ -778,7 +865,7 @@ namespace Process_DashboardToolBar
             {
                 TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
 
-                if (timerResponse != null)
+                if (timerResponse != null && timerResponse.Timer.ActiveTask !=null)
                 {
                     //Get the Selected Project Name
                     _currentSelectedProjectName = timerResponse.Timer.ActiveTask.Project.Name;
@@ -1036,7 +1123,7 @@ namespace Process_DashboardToolBar
                     {
                         _pauseButton.Checked = false;
                         _playButton.Checked = true;
-                        _playButton.Enabled = true;
+                        _playButton.Enabled = true;                       
                     }
                     else
                     {
@@ -1071,7 +1158,7 @@ namespace Process_DashboardToolBar
                 TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
 
                 //Check the Timer Response
-                if (timerResponse != null)
+                if (timerResponse != null && timerResponse.Timer.ActiveTask !=null)
                 {
                     //Get the Current Task Full Name
                     strCurrentTask = timerResponse.Timer.ActiveTask.FullName;
@@ -1261,7 +1348,7 @@ namespace Process_DashboardToolBar
                     // TODO: update the active project/task and the play/pause state   
                     UpdateTheButtonStateOnButtonCommandClick();
                     break;
-
+                                        
                 case "taskData":
                     // TODO: refresh the state of the "Completed" button, just in case
                     UpdateTheButtonStateOnButtonCommandClick();
@@ -1270,10 +1357,20 @@ namespace Process_DashboardToolBar
                 case "hierarchy":
                     // TODO: update the list of known projects, and the tasks 
                     // within the current project
+                    ProcessSetActiveProcessIDBasedOnProjectStat();
+                    ProcessSetActiveTaskIDBasedOnProjectStat();
+                    break;
+
+                case "activeTask":
+                    // TODO: update the list of known projects, and the tasks 
+                    // within the current project                    
+                      ProcessSetActiveProcessIDBasedOnProjectStat();
+                      ProcessSetActiveTaskIDBasedOnProjectStat();
                     break;
 
                 case "taskList":
                     // TODO: update the list of tasks within the current project
+                    ProcessSetActiveTaskIDBasedOnProjectStat();
                     break;
                 default:
                     break;
@@ -1333,6 +1430,17 @@ namespace Process_DashboardToolBar
             set { _processDashboardRunStatus = value; }
         }
 
+
+        /// <summary>
+        /// Property to Get and Set If Reset Event Need to be Handled or Not
+        /// </summary>
+        public bool HandlingResetEvent
+        {
+            get { return _handlingRestEvent; }
+            set { _handlingRestEvent = value; }
+        }
+
+        
         #endregion
 
         #region Private Variables        
@@ -1442,6 +1550,12 @@ namespace Process_DashboardToolBar
         /// Maximum Event Id Variable
         /// </summary>
         private int _maxEventID = 0;
+
+        /// <summary>
+        ///  Variable to Get and Set If Reset Event Need to be Handled or Not
+        /// </summary>
+        private bool _handlingRestEvent = false;
+     
 
         #endregion
     }
