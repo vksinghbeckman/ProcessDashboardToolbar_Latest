@@ -20,7 +20,7 @@ namespace Process_DashboardToolBar
         //Finish Button
         cmdidFinish = 0x102,
 
-        //Task Command
+         //Task Command
         cmdidTask = 0x103,
 
         //Selecting the Task List
@@ -34,6 +34,9 @@ namespace Process_DashboardToolBar
 
         //Project List Details
         cmdidProjectList=0x107,
+
+        //Defect Command
+        cmdidDefect=0x108,
 
     };
 }

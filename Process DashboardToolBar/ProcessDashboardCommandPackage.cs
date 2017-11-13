@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using Refit;
 using Process_DashboardToolBarTaskDetails;
 using System.Threading;
+using System.Drawing;
 
 namespace Process_DashboardToolBar
 {
@@ -57,6 +58,33 @@ namespace Process_DashboardToolBar
         /// </summary>
         public const string PackageGuidString = "07cf8928-509a-4681-a477-54653081904b";
 
+        [DllImport("user32.dll")]
+        public static extern bool SetForegroundWindow(IntPtr hWnd);
+
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT
+        {
+            public int Left;        // x position of upper-left corner
+            public int Top;         // y position of upper-left corner
+            public int Right;       // x position of lower-right corner
+            public int Bottom;      // y position of lower-right corner
+        }
+
+        private const int SWP_NOSIZE = 0x0001;
+        private const int SWP_NOZORDER = 0x0004;
+        private const int SWP_SHOWWINDOW = 0x0040;
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, int uFlags);
+
+        // For Windows Mobile, replace user32.dll with coredll.dll
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
         /// <summary>
         /// Initializes a new instance of the <see cref="ProcessDashboardCommand"/> class.
         /// </summary>
@@ -203,6 +231,12 @@ namespace Process_DashboardToolBar
                                    _finishButton = menuItem;       
                                 }
                                 break;
+                            case PkgCmdIDList.cmdidDefect:
+                                {
+                                    //defect button
+                                    _defectButton = menuItem;
+                                }
+                                break;
                             default:
                                 break;
                            
@@ -253,7 +287,12 @@ namespace Process_DashboardToolBar
                             //Update the Finish Button on Finish Button Click
                             UpdateTheButtonStateOnButtonCommandClick();
                         }
-                        break;                   
+                        break;
+                    case PkgCmdIDList.cmdidDefect:
+                        {
+                            DisplayDefectDialog();                                
+                        }
+                        break;              
                     default:
                         break;
                 }
@@ -1424,6 +1463,106 @@ namespace Process_DashboardToolBar
 
         #endregion
 
+        #region Defect Windows Setup
+
+        /// <summary>
+        /// Display the Defect Dialog
+        /// </summary>
+        private async void DisplayDefectDialog()
+        {
+            try
+            {
+                //Check if the Defect Window is Already Open
+                if(IsDefaultWindowAlreadyOpen()==false)
+                {
+                    //Get the Timer State
+                    ProcessDashboardWindow windowResponse = await _pDashAPI.DisplayDefectWindow();
+
+                    //Check the Timer Response
+                    if (windowResponse != null)
+                    {
+                        if ((IntPtr)windowResponse.window.id != IntPtr.Zero)
+                        {
+                            SetForegroundWindow((IntPtr)windowResponse.window.id);
+                            SetDefectWindowToCenter((IntPtr)windowResponse.window.id);
+
+                            _defaultDefectWindowTitle = windowResponse.window.title;
+                        }
+                    }
+
+                }else
+                {
+                    IntPtr wndHandle = FindWindow(null, _defaultDefectWindowTitle);
+
+                    if (wndHandle != IntPtr.Zero)
+                    {
+                        SetForegroundWindow(wndHandle);
+                        SetDefectWindowToCenter(wndHandle);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                //Handle the Exception
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Set the Default Window to Center
+        /// </summary>
+        /// <param name="handle">Window Handle for the Defect Window</param>
+        private void SetDefectWindowToCenter(IntPtr handle)
+        {
+            try
+            {
+                if (handle != IntPtr.Zero)
+                {
+                    RECT rct;
+                    GetWindowRect(handle, out rct);
+                    Rectangle screen = Screen.FromHandle(handle).Bounds;
+                    Point pt = new Point(screen.Left + screen.Width / 2 - (rct.Right - rct.Left) / 2, screen.Top + screen.Height / 2 - (rct.Bottom - rct.Top) / 2);
+                    SetWindowPos(handle, IntPtr.Zero, pt.X, pt.Y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_SHOWWINDOW);
+                }
+            }
+
+            catch(Exception ex)
+            {
+                //Handle the Exception
+                Console.WriteLine(ex.ToString());
+            }       
+           
+        }
+
+        /// <summary>
+        /// Default Window Name 
+        /// </summary>
+        /// <returns></returns>
+        private bool IsDefaultWindowAlreadyOpen()
+        {
+            bool bState = false;
+
+            try
+            {
+                IntPtr wndHandle = FindWindow(null, _defaultDefectWindowTitle);
+
+                if (wndHandle != IntPtr.Zero)
+                {
+                    bState = true;
+                }
+            }
+            catch(Exception ex)
+            {
+                //Handle the Exception
+                Console.WriteLine(ex.ToString());
+            }
+                  
+
+            return bState;
+        }
+        #endregion
+
         #region Properties
 
         /// <summary>
@@ -1500,6 +1639,11 @@ namespace Process_DashboardToolBar
         /// Finish Button Menu Command
         /// </summary>
         private OleMenuCommand _finishButton;
+
+        /// <summary>
+        /// Defect Button Menu Command
+        /// </summary>
+        private OleMenuCommand _defectButton;
 
         /// <summary>
         /// Project Combo List
@@ -1597,6 +1741,16 @@ namespace Process_DashboardToolBar
         ///  Variable to Get and Set If Reset Event Need to be Handled or Not
         /// </summary>
         private bool _handlingRestEvent = false;
+
+        /// <summary>
+        /// DefaultWindowName
+        /// </summary>
+        private string _defaultDefectWindowTitle = "Defect Dialog";
+
+        /// <summary>
+        /// Default Window ID for the Defect Window
+        /// </summary>
+        private IntPtr _defaultDefectWindowId = IntPtr.Zero;
      
 
         #endregion

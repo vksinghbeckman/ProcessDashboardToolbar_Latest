@@ -38,4 +38,16 @@ namespace Process_DashboardToolBarTaskDetails
         public Task task { get; set; }
         public string stat { get; set; }
     }
+
+    public class Window
+    {
+        public int id { get; set; }
+        public string title { get; set; }
+    }
+
+    public class ProcessDashboardWindow
+    {
+        public Window window { get; set; }
+        public string stat { get; set; }
+    }
 }

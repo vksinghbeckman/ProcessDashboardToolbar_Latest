@@ -44,6 +44,12 @@ namespace Process_DashboardToolBar
         [Get("/api/v1/events/")]
         Task<PDEventsApiResponse> GetEvents(int after);
 
+        //Get the Defect Windows
+        // Get event notifications
+        [Get("/control/showDefectDialog")]
+        Task<ProcessDashboardWindow> DisplayDefectWindow();
+
+
     }
 
 }

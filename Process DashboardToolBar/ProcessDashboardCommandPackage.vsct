@@ -92,6 +92,15 @@
           <ButtonText>Finish</ButtonText>
         </Strings>
       </Button>   
+      
+        <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidDefect" priority="0x1002" type="Button">
+        <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
+        <Icon guid="guidDefectImage" id="bmpDefectImage" />      
+        <Strings>
+          <ToolTipText>Defect to be Logged</ToolTipText>
+          <ButtonText>Defect</ButtonText>          
+        </Strings>
+      </Button>
 
 
       <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidProcessDashboardToolWindowCommand" priority="0x0100" type="Button">
@@ -117,7 +126,7 @@
         </Strings>
       </Combo>
       
-      <Combo guid="guidProcessDashboardCommandPackageCmdSet" id="cmdProjectDetails" priority="0x10" type="DropDownCombo" idCommandList="cmdidProjectList" defaultWidth="500">
+      <Combo guid="guidProcessDashboardCommandPackageCmdSet" id="cmdProjectDetails" priority="0x10" type="DropDownCombo" idCommandList="cmdidProjectList" defaultWidth="300">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
         <CommandFlag>StretchHorizontally</CommandFlag>
         <Strings>
@@ -142,6 +151,8 @@
       <Bitmap guid="guidImages1" href="Resources\ProcessDashboardToolWindowCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
       <Bitmap guid="guidStartImage" href="Resources\play.ico" usedList="bmpStartImage" />      
       <Bitmap guid="guidPauseImage" href="Resources\pause.ico" usedList="bmpPauseImage" />
+      <Bitmap guid="guidDefectImage" href="Resources\defect.ico" usedList="bmpDefectImage" />
+    
     </Bitmaps>
   </Commands>
 
@@ -160,7 +171,8 @@
       <IDSymbol name="cmdidTaskList" value="0x104" />      
       <IDSymbol name="cmdidFinishCheck" value="0x105" />
       <IDSymbol name="cmdProjectDetails" value="0x106" />
-      <IDSymbol name="cmdidProjectList" value="0x107" />     
+      <IDSymbol name="cmdidProjectList" value="0x107" />    
+      <IDSymbol name="cmdidDefect" value="0x108" /> 
 
       <IDSymbol value="4129" name="cmdidProcessDashboardToolWindowCommand" />
     </GuidSymbol>
@@ -189,6 +201,10 @@
 
     <GuidSymbol name="guidPauseImage" value="{D5EACE91-F7A2-4365-B015-48E1BFE4D76F}">
       <IDSymbol name="bmpPauseImage" value="1" />     
+    </GuidSymbol>
+    
+   <GuidSymbol name="guidDefectImage" value="{85F36FB7-CB9D-4C14-8C96-3149D1B31C47}">
+      <IDSymbol name="bmpDefectImage" value="1" />     
     </GuidSymbol>
 
   </Symbols>
