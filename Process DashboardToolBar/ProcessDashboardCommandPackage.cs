@@ -328,20 +328,21 @@ namespace Process_DashboardToolBar
                     //Select the Project Name
                     _currentSelectedProjectName = newChoice;
 
+                    //Set the Active Task ID
+                    ProcessSetActiveProjectID();
+
                     //Update the Selected Project Information
                     UpdateCurrentSelectedProject(newChoice);
 
                     //Set the Current Task Choice to NULL        
                     _currentTaskChoice = "";
 
-                    //Get the Task List Information from the Project 
-                    GetTaskListInformation();
-
                     /* To DO Pending -- Need to Check this Logic Once the Project Change
                     How to Get the Information 
                     //Get the Current Active Task and Update the UI Once the Project Name Changed By the User
-                    GetAndSetCurrentActiveTaskOnProjectChange();
                     */
+                    ProcessSetActiveTaskIDBasedOnProjectStat();
+                    
                    
                 }
                 
@@ -556,6 +557,38 @@ namespace Process_DashboardToolBar
            
         }
 
+
+        /// <summary>
+        /// Process Ser Active Project ID
+        /// </summary> 
+        private async void ProcessSetActiveProjectID()
+        {
+            try
+            {
+                 //Get the Project ID Details
+                ProjectIdDetails projectDetails = _activeProjectList.Find(x => x.name == _currentSelectedProjectName);
+
+                string strProjectIDFormat = string.Format("{0}:root", projectDetails.id);
+
+                //Create the Parameters
+                var param = new Dictionary<string, object> { { "activeTaskId", strProjectIDFormat } };
+
+                //Update the Timer API Response
+                TimerApiResponse t2 = await _pDashAPI.ChangeTimerState(param);
+
+                if(t2!=null)
+                {
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                UpdateUIControls(false);
+            }
+
+        }
 
         /// <summary>
         /// Process Ser Active TasK ID
