@@ -380,7 +380,7 @@ namespace Process_DashboardToolBar
                     How to Get the Information 
                     //Get the Current Active Task and Update the UI Once the Project Name Changed By the User
                     */
-                    ProcessSetActiveTaskIDBasedOnProjectStat();
+                    ProcessSetActiveTaskIDBasedOnProjectStat(true);
                     
                    
                 }
@@ -658,7 +658,7 @@ namespace Process_DashboardToolBar
         /// <summary>
         /// Process Ser Active TasK ID
         /// </summary> 
-        private async void ProcessSetActiveProcessIDBasedOnProjectStat()
+        private async void ProcessSetActiveProcessIDBasedOnProjectStat(bool forceReload)
         {         
             try
             {
@@ -668,7 +668,7 @@ namespace Process_DashboardToolBar
                 if(timerResponse != null && timerResponse.Timer.ActiveTask !=null)
                 {
                     //Check if the Project is Same or Different Selected
-                    if(_currentSelectedProjectName != timerResponse.Timer.ActiveTask.Project.Name)
+                    if(forceReload || _currentSelectedProjectName != timerResponse.Timer.ActiveTask.Project.Name)
                     {
                         _projectComboList.Enabled = false;
                         //Clear All the Project
@@ -701,7 +701,7 @@ namespace Process_DashboardToolBar
         /// <summary>
         /// Process Ser Active TasK ID
         /// </summary> 
-        private async void ProcessSetActiveTaskIDBasedOnProjectStat()
+        private async void ProcessSetActiveTaskIDBasedOnProjectStat(bool forceReload)
         {
 
             try
@@ -711,7 +711,7 @@ namespace Process_DashboardToolBar
 
                 if (timerResponse != null && timerResponse.Timer.ActiveTask !=null)
                 {
-                    if(_currentTaskChoice != timerResponse.Timer.ActiveTask.FullName)
+                    if(forceReload || _currentTaskChoice != timerResponse.Timer.ActiveTask.FullName)
                     {
                         //Disable and Enable Done to Update the Combo Box
                         projectTaskListComboBox.Enabled = false;
@@ -1426,32 +1426,31 @@ namespace Process_DashboardToolBar
             switch (evt.type)
             {
                 case "timer":
-                    // TODO: update the active project/task and the play/pause state   
+                    // update the play/pause state   
                     UpdateTheButtonStateOnButtonCommandClick();
                     break;
                                         
                 case "taskData":
-                    // TODO: refresh the state of the "Completed" button, just in case
+                    // refresh the state of the "Completed" button, just in case
                     UpdateTheButtonStateOnButtonCommandClick();
                     break;
 
                 case "hierarchy":
-                    // TODO: update the list of known projects, and the tasks 
+                    // update the list of known projects, and the tasks 
                     // within the current project
-                    ProcessSetActiveProcessIDBasedOnProjectStat();
-                    ProcessSetActiveTaskIDBasedOnProjectStat();
+                    ProcessSetActiveProcessIDBasedOnProjectStat(true);
+                    ProcessSetActiveTaskIDBasedOnProjectStat(true);
                     break;
 
                 case "activeTask":
-                    // TODO: update the list of known projects, and the tasks 
-                    // within the current project                    
-                      ProcessSetActiveProcessIDBasedOnProjectStat();
-                      ProcessSetActiveTaskIDBasedOnProjectStat();
+                    // update the currently selected project and task
+                      ProcessSetActiveProcessIDBasedOnProjectStat(false);
+                      ProcessSetActiveTaskIDBasedOnProjectStat(false);
                     break;
 
                 case "taskList":
-                    // TODO: update the list of tasks within the current project
-                    ProcessSetActiveTaskIDBasedOnProjectStat();
+                    // update the list of tasks within the current project
+                    ProcessSetActiveTaskIDBasedOnProjectStat(true);
                     break;
                 default:
                     break;
