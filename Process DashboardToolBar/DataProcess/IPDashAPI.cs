@@ -49,7 +49,15 @@ namespace Process_DashboardToolBar
         [Get("/control/showDefectDialog")]
         Task<ProcessDashboardWindow> DisplayDefectWindow();
 
+        //Get the Trigger Response
+        [Get("/control/runTrigger")]
+        Task<TriggerResponse> RunTrigger(string uri);
 
+        // Get Task Resource List Based ob the Task ID Tasks Based on the Project ID
+        [Get("/api/v1/tasks/{taskId}/resources/")]
+
+        //Get Task Resource Details Details
+        Task<PDTaskResources> GetTaskResourcesDeatails(string taskId);
     }
 
 }

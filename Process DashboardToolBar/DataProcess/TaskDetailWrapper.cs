@@ -50,4 +50,33 @@ namespace Process_DashboardToolBarTaskDetails
         public Window window { get; set; }
         public string stat { get; set; }
     }
+
+    public class Message
+    {
+        public string title { get; set; }
+        public string body { get; set; }
+    }
+
+    public class TriggerResponse
+    {
+        public Window window { get; set; }
+        public Message message { get; set; }
+        public string redirect { get; set; }
+        public string stat { get; set; }
+    }
+
+
+    public class Resource
+    {
+        public string name { get; set; }
+        public string uri { get; set; }
+        public string taskPath { get; set; }
+        public bool? trigger { get; set; }
+    }
+
+    public class PDTaskResources
+    {
+        public List<Resource> resources { get; set; }
+        public string stat { get; set; }
+    }
 }

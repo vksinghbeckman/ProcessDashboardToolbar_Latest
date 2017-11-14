@@ -38,5 +38,8 @@ namespace Process_DashboardToolBar
         //Defect Command
         cmdidDefect=0x108,
 
+        //Open the report
+        cmdidOpenReport =0x109,
+
     };
 }

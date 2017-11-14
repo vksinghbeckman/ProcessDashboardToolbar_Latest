@@ -101,13 +101,21 @@
           <ButtonText>Defect</ButtonText>          
         </Strings>
       </Button>
+      
+       <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidOpenReport" priority="0x1003" type="Button">
+        <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
+         <Strings>
+          <ToolTipText>Open the Report</ToolTipText>
+          <ButtonText>Open</ButtonText>          
+        </Strings>
+      </Button>
 
 
       <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidProcessDashboardToolWindowCommand" priority="0x0100" type="Button">
         <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1" />
         <Icon guid="guidImages1" id="bmpPic1" />
         <Strings>
-          <ButtonText>ProcessDashboardToolWindow</ButtonText>
+          <ButtonText>Reports</ButtonText>
         </Strings>
       </Button>      
       
@@ -173,6 +181,7 @@
       <IDSymbol name="cmdProjectDetails" value="0x106" />
       <IDSymbol name="cmdidProjectList" value="0x107" />    
       <IDSymbol name="cmdidDefect" value="0x108" /> 
+      <IDSymbol name="cmdidOpenReport" value="0x109" />       
 
       <IDSymbol value="4129" name="cmdidProcessDashboardToolWindowCommand" />
     </GuidSymbol>

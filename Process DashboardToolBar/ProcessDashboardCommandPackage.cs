@@ -237,6 +237,12 @@ namespace Process_DashboardToolBar
                                     _defectButton = menuItem;
                                 }
                                 break;
+                            case PkgCmdIDList.cmdidOpenReport:
+                                {
+                                    //Report button
+                                    _reportButton = menuItem;
+                                }
+                                break;
                             default:
                                 break;
                            
@@ -288,11 +294,19 @@ namespace Process_DashboardToolBar
                             UpdateTheButtonStateOnButtonCommandClick();
                         }
                         break;
+
                     case PkgCmdIDList.cmdidDefect:
                         {
+                            //Open the Defect Dialog
                             DisplayDefectDialog();                                
                         }
-                        break;              
+                        break;
+                    case PkgCmdIDList.cmdidOpenReport:
+                        {
+                            //Open the Report Window
+                            ShowToolWindow();
+                        }
+                        break;        
                     default:
                         break;
                 }
@@ -476,6 +490,9 @@ namespace Process_DashboardToolBar
 
                 //Update the Button State Based on the Timer Status
                 ClearAndUpdateTimersStateOnSelectionChange();
+
+                //Update the Task resources List
+                GetActiveTaskResourcesList();
             }
 
         }
@@ -734,7 +751,10 @@ namespace Process_DashboardToolBar
 
                         //Update the Button State Based on the Timer Status
                         ClearAndUpdateTimersStateOnSelectionChange();
-                        
+
+                        //Update the Task Resources List
+                        GetActiveTaskResourcesList();
+
                     }
                  
                 }
@@ -1440,17 +1460,18 @@ namespace Process_DashboardToolBar
                     // within the current project
                     ProcessSetActiveProcessIDBasedOnProjectStat(true);
                     ProcessSetActiveTaskIDBasedOnProjectStat(true);
+                 
                     break;
 
                 case "activeTask":
                     // update the currently selected project and task
                       ProcessSetActiveProcessIDBasedOnProjectStat(false);
-                      ProcessSetActiveTaskIDBasedOnProjectStat(false);
+                      ProcessSetActiveTaskIDBasedOnProjectStat(false);                    
                     break;
 
                 case "taskList":
                     // update the list of tasks within the current project
-                    ProcessSetActiveTaskIDBasedOnProjectStat(true);
+                    ProcessSetActiveTaskIDBasedOnProjectStat(true);                
                     break;
                 default:
                     break;
@@ -1547,6 +1568,96 @@ namespace Process_DashboardToolBar
         }
         #endregion
 
+        #region Report Section
+
+        /// <summary>
+        /// Get the Projct Task Resource List
+        /// Rest API call will Process Dashboard to Get the Data 
+        /// </summary>
+        private async void GetActiveTaskResourcesList()
+        {
+            try
+            {
+                //Get the Current Selected Project Task
+                ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
+
+                if(projectTaskInfo != null && projectTaskInfo.id.Length>0)
+                {
+                    PDTaskResources taskResourceInfo = await _pDashAPI.GetTaskResourcesDeatails(projectTaskInfo.id);
+
+                    if (taskResourceInfo != null)
+                    {
+                        //Clear the List
+                        _activeTaskResourceList.Clear();
+
+                        //Add the Project and Items in a List
+                        foreach (var item in taskResourceInfo.resources)
+                        {
+                            //Add the Items in the List
+                            _activeTaskResourceList.Add(item);
+                        }
+                    }
+                }
+                
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                UpdateUIControls(false);
+            }
+
+        }
+        /// <summary>
+        /// Get Selected Project Information on Startup
+        /// </summary>
+        /// 
+        /// <summary>
+        /// Handle the Trigger Reponse 
+        /// </summary>
+        /// <param name="response">Trigger Response Object</param>
+        private void HandleTriggerResponse(TriggerResponse response)
+        {
+            if (response.window != null)
+            {
+                // write code here to bring a window to the front,
+                // using the values in response.window.id,
+                // response.window.pid, or response.window.title
+            }
+            else if (response.message != null)
+            {
+                // write code here to display a message to the user,
+                // using the values in response.message.title and
+                // response.message.body
+            }
+            else if (response.redirect != null)
+            {
+                // write code here to open the redirect URI
+                // in a web browser tab
+            }
+        }
+
+        /// <summary>
+        /// Shows the tool window when the menu item is clicked.
+        /// </summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event args.</param>
+        private void ShowToolWindow()
+        {
+            // Get the instance number 0 of this tool window. This window is single instance so this instance
+            // is actually the only one.
+            // The last flag is set to true so that if the tool window does not exists it will be created.
+            ToolWindowPane window = FindToolWindow(typeof(ProcessDashboardToolWindow), 0, true);
+            if ((null == window) || (null == window.Frame))
+            {
+                throw new NotSupportedException("Cannot create tool window");
+            }
+
+            IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
+            Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
+        }
+        #endregion
+
         #region Properties
 
         /// <summary>
@@ -1630,6 +1741,11 @@ namespace Process_DashboardToolBar
         private OleMenuCommand _defectButton;
 
         /// <summary>
+        /// Report Button Menu Command
+        /// </summary>
+        private OleMenuCommand _reportButton;
+
+        /// <summary>
         /// Project Combo List
         /// </summary>
         private OleMenuCommand _projectComboList;
@@ -1658,7 +1774,12 @@ namespace Process_DashboardToolBar
         /// Active Project Task List [Project Task Inside the Process]
         /// </summary>
         private List<ProjectTask> _activeProjectTaskList;
-        
+
+        /// <summary>
+        /// Active Project Task Resource List
+        /// </summary>
+        private List<Resource> _activeTaskResourceList;
+
         /// <summary>
         /// Finish Button State
         /// </summary>
