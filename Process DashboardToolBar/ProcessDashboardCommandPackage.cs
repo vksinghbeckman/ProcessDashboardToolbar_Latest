@@ -22,6 +22,7 @@ using Refit;
 using Process_DashboardToolBarTaskDetails;
 using System.Threading;
 using System.Drawing;
+using System.Collections;
 
 namespace Process_DashboardToolBar
 {
@@ -176,6 +177,8 @@ namespace Process_DashboardToolBar
         private void InitializeCommandHandlers()
         {
             var mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+
+            this.InitMRUMenu(mcs);
 
             if (null == mcs) return;
 
@@ -1656,6 +1659,72 @@ namespace Process_DashboardToolBar
             IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
             Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
         }
+
+        private void InitializeMRUList()
+        {
+            if (null == this.mruList)
+            {
+                this.mruList = new ArrayList();
+                if (null != this.mruList)
+                {
+                    for (int i = 0; i < this.numMRUItems; i++)
+                    {
+                        this.mruList.Add(string.Format(CultureInfo.CurrentCulture,
+                            "Item {0}", i + 1));
+                    }
+                }
+            }
+        }
+
+        private void InitMRUMenu(OleMenuCommandService mcs)
+        {
+            InitializeMRUList();
+            for (int i = 0; i < this.numMRUItems; i++)
+            {
+                var cmdID = new CommandID(
+                    GuidList.guidProcessDashboardCommandPackageCmdSet, this.baseMRUID + i);
+                var mc = new OleMenuCommand(
+                    new EventHandler(OnMRUExec), cmdID);
+                mc.BeforeQueryStatus += new EventHandler(OnMRUQueryStatus);
+                mcs.AddCommand(mc);
+            }
+        }
+
+        private void OnMRUQueryStatus(object sender, EventArgs e)
+        {
+            OleMenuCommand menuCommand = sender as OleMenuCommand;
+            if (null != menuCommand)
+            {
+                int MRUItemIndex = menuCommand.CommandID.ID - this.baseMRUID;
+                if (MRUItemIndex >= 0 && MRUItemIndex < this.mruList.Count)
+                {
+                    menuCommand.Text = this.mruList[MRUItemIndex] as string;
+                }
+            }
+        }
+
+        private void OnMRUExec(object sender, EventArgs e)
+        {
+            var menuCommand = sender as OleMenuCommand;
+            if (null != menuCommand)
+            {
+                int MRUItemIndex = menuCommand.CommandID.ID - this.baseMRUID;
+                if (MRUItemIndex >= 0 && MRUItemIndex < this.mruList.Count)
+                {
+                    string selection = this.mruList[MRUItemIndex] as string;
+                    for (int i = MRUItemIndex; i > 0; i--)
+                    {
+                        this.mruList[i] = this.mruList[i - 1];
+                    }
+                    this.mruList[0] = selection;
+                    System.Windows.Forms.MessageBox.Show(
+                        string.Format(CultureInfo.CurrentCulture,
+                                      "Selected {0}", selection));
+                }
+            }
+        }
+
+
         #endregion
 
         #region Properties
@@ -1856,7 +1925,13 @@ namespace Process_DashboardToolBar
         /// Default Window ID for the Defect Window
         /// </summary>
         private IntPtr _defaultDefectWindowId = IntPtr.Zero;
-     
+
+        public const uint cmdidMRUList = 0x201;
+
+        private int numMRUItems = 4;
+        private int baseMRUID = (int)cmdidMRUList;
+        private ArrayList mruList;
+
 
         #endregion
     }
