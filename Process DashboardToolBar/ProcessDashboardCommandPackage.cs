@@ -1470,36 +1470,21 @@ namespace Process_DashboardToolBar
         private async void DisplayDefectDialog()
         {
             try
-            {
-                //Check if the Defect Window is Already Open
-                if(IsDefaultWindowAlreadyOpen()==false)
-                {
-                    //Get the Timer State
-                    ProcessDashboardWindow windowResponse = await _pDashAPI.DisplayDefectWindow();
+            {                
+                //Get the Timer State
+                 ProcessDashboardWindow windowResponse = await _pDashAPI.DisplayDefectWindow();
 
-                    //Check the Timer Response
-                    if (windowResponse != null)
-                    {
-                        if ((IntPtr)windowResponse.window.id != IntPtr.Zero)
+                 //Check the Timer Response
+                  if (windowResponse != null)
+                   {
+                       if ((IntPtr)windowResponse.window.id != IntPtr.Zero)
                         {
                             SetForegroundWindow((IntPtr)windowResponse.window.id);
                             SetDefectWindowToCenter((IntPtr)windowResponse.window.id);
 
                             _defaultDefectWindowTitle = windowResponse.window.title;
                         }
-                    }
-
-                }else
-                {
-                    IntPtr wndHandle = FindWindow(null, _defaultDefectWindowTitle);
-
-                    if (wndHandle != IntPtr.Zero)
-                    {
-                        SetForegroundWindow(wndHandle);
-                        SetDefectWindowToCenter(wndHandle);
-                    }
-                }
-
+                    } 
             }
             catch (Exception ex)
             {
