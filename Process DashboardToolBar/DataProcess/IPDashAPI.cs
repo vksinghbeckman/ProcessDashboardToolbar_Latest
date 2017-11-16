@@ -49,6 +49,14 @@ namespace Process_DashboardToolBar
         [Get("/control/showDefectDialog")]
         Task<ProcessDashboardWindow> DisplayDefectWindow();
 
+        //Get the Time Log Windows
+        [Get("/control/showTimeLog")]
+        Task<ProcessDashboardWindow> DisplayTimeLogWindow();
+
+        //Get the Defect Log Windows
+        [Get("/control/showDefectLog")]
+        Task<ProcessDashboardWindow> DisplayDefectLogWindow();
+
         //Get the Trigger Response
         [Get("/control/runTrigger")]
         Task<TriggerResponse> RunTrigger(string uri);

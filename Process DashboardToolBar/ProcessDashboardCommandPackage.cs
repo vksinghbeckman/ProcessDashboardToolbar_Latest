@@ -1576,6 +1576,63 @@ namespace Process_DashboardToolBar
         }
 
         /// <summary>
+        /// Display the Time Log Dialog
+        /// </summary>
+        private async void DisplayTimeLogWindow()
+        {
+            try
+            {
+                //Get the Timer State
+                ProcessDashboardWindow windowResponse = await _pDashAPI.DisplayTimeLogWindow();
+
+                //Check the Timer Response
+                if (windowResponse != null)
+                {
+                    if ((IntPtr)windowResponse.window.id != IntPtr.Zero)
+                    {
+                        SetForegroundWindow((IntPtr)windowResponse.window.id);
+                        SetDefectWindowToCenter((IntPtr)windowResponse.window.id);
+
+                        _defaultDefectWindowTitle = windowResponse.window.title;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                //Handle the Exception
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Display the Defect Log Dialog
+        /// </summary>
+        private async void DisplayDefectLogWindow()
+        {
+            try
+            {
+                //Get the Timer State
+                ProcessDashboardWindow windowResponse = await _pDashAPI.DisplayDefectLogWindow();
+
+                //Check the Timer Response
+                if (windowResponse != null)
+                {
+                    if ((IntPtr)windowResponse.window.id != IntPtr.Zero)
+                    {
+                        SetForegroundWindow((IntPtr)windowResponse.window.id);
+                        SetDefectWindowToCenter((IntPtr)windowResponse.window.id);
+
+                        _defaultDefectWindowTitle = windowResponse.window.title;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                //Handle the Exception
+                Console.WriteLine(ex.ToString());
+            }
+        }
+        /// <summary>
         /// Set the Default Window to Center
         /// </summary>
         /// <param name="handle">Window Handle for the Defect Window</param>
@@ -1683,31 +1740,39 @@ namespace Process_DashboardToolBar
         /// <param name="response">Trigger Response Object</param>
         private void HandleTriggerResponse(TriggerResponse response)
         {
-            if (response.window != null)
+            try
             {
-                // write code here to bring a window to the front,
-                // using the values in response.window.id,
-                // response.window.pid, or response.window.title
-
-                if((IntPtr)response.window.id !=IntPtr.Zero)
+                if (response.window != null)
                 {
-                    SetForegroundWindow((IntPtr)response.window.id);
+                    // write code here to bring a window to the front,
+                    // using the values in response.window.id,
+                    // response.window.pid, or response.window.title
+
+                    if ((IntPtr)response.window.id != IntPtr.Zero)
+                    {
+                        SetForegroundWindow((IntPtr)response.window.id);
+                    }
+
                 }
-               
+                else if (response.message != null)
+                {
+                    // write code here to display a message to the user,
+                    // using the values in response.message.title and
+                    // response.message.body
+                    System.Windows.Forms.MessageBox.Show(response.message.body, response.message.title, MessageBoxButtons.OK);
+                }
+                else if (response.redirect != null)
+                {
+                    // write code here to open the redirect URI
+                    // in a web browser tab
+                    ProcessReportOnTaskResourceChange(_currentTaskResourceID.uri);
+                }
             }
-            else if (response.message != null)
+            catch(Exception ex)
             {
-                // write code here to display a message to the user,
-                // using the values in response.message.title and
-                // response.message.body
-                System.Windows.Forms.MessageBox.Show(response.message.body, response.message.title, MessageBoxButtons.OK);
+                Console.WriteLine(ex.ToString());         
             }
-            else if (response.redirect != null)
-            {
-                // write code here to open the redirect URI
-                // in a web browser tab
-                ProcessReportOnTaskResourceChange(_currentTaskResourceID.uri);
-            }
+          
         }
 
         /// <summary>
@@ -1735,30 +1800,132 @@ namespace Process_DashboardToolBar
         /// </summary>
         private void ProcessTasKResourceMenuItems()
         {
-            //Clear the Command List from Existing List
-            ClearCommandList();
-
-            //Get the Service from Ole Menu Command Service
-            var mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
-            
-            //Check for NULL
-            if (null == mcs && _activeTaskResourceList.Count == 0)
-                return;
-
-            //Prepare the Command Handlers
-            for (int i = 0; i < _activeTaskResourceList.Count; i++)
+            try
             {
-                var cmdID = new CommandID(
-                    GuidList.guidProcessDashboardCommandPackageCmdSet, this.baseMRUID + i);
-                var mc = new OleMenuCommand(
-                    new EventHandler(OnTaskResourceQueryExecution), cmdID);
-                mc.Visible = false;
-                mc.BeforeQueryStatus += new EventHandler(OnTaskResourceQueryItem);
+                //Clear the Command List from Existing List
+                ClearCommandList();
+
+                //Get the Service from Ole Menu Command Service
+                var mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+
+                //Check for NULL
+                if (null == mcs && _activeTaskResourceList.Count == 0)
+                    return;
+
+                //Prepare the Command Handlers
+                for (int i = 0; i < _activeTaskResourceList.Count; i++)
+                {
+                    var cmdID = new CommandID(
+                        GuidList.guidProcessDashboardCommandPackageCmdSet, this.baseMRUID + i);
+                    var mc = new OleMenuCommand(
+                        new EventHandler(OnTaskResourceQueryExecution), cmdID);
+                    mc.Visible = false;
+                    mc.BeforeQueryStatus += new EventHandler(OnTaskResourceQueryItem);
+
+                    //Add the Command to the Queue
+                    mcs.AddCommand(mc);
+                    _oldTaskResourceList.Add(mc);
+                }
+
+                //Time Log Menu Command Addition
+                var cmdTimeLogID = new CommandID(
+                      GuidList.guidProcessDashboardCommandPackageCmdSet, this.baseMRUID + _activeTaskResourceList.Count);
+                var mcTimelog = new OleMenuCommand(
+                    new EventHandler(OnTaskTimeLogResourceQueryExecution), cmdTimeLogID);
+                mcTimelog.Visible = false;
+                mcTimelog.BeforeQueryStatus += new EventHandler(OnTaskMenuTimeLogResourceQueryItem);
+
+
+                //Add the Time Log Command to the Queue
+                mcs.AddCommand(mcTimelog);
+                _oldTaskResourceList.Add(mcTimelog);
+
+                var cmdDefectLogID = new CommandID(
+                      GuidList.guidProcessDashboardCommandPackageCmdSet, this.baseMRUID + (_activeTaskResourceList.Count+1));
+                var mcDefectlog = new OleMenuCommand(
+                    new EventHandler(OnTaskDefectLogResourceQueryExecution), cmdDefectLogID);
+                mcDefectlog.Visible = false;
+                mcDefectlog.BeforeQueryStatus += new EventHandler(OnTaskMenuDefectLogResourceQueryItem);
+
 
                 //Add the Command to the Queue
-                mcs.AddCommand(mc);
-                _oldTaskResourceList.Add(mc);
+                mcs.AddCommand(mcDefectlog);
+                _oldTaskResourceList.Add(mcDefectlog);
+
             }
+
+
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+           
+        }
+
+        /// <summary>
+        /// Get the Time Log Resource Query Items
+        /// </summary>
+        /// <param name="sender">Command Sender</param>
+        /// <param name="e">Event Argument</param>
+        private void OnTaskMenuTimeLogResourceQueryItem(object sender, EventArgs e)
+        {
+            try
+            {
+                OleMenuCommand menuCommand = sender as OleMenuCommand;
+                if (null != menuCommand)
+                {
+                    menuCommand.Text = _timeLogMenu;
+                    menuCommand.Visible = true;                    
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+
+        }
+
+        /// <summary>
+        /// Update the Time Log Resource Query Execution
+        /// </summary>
+        /// <param name="sender">Command Sender</param>
+        /// <param name="e">Event Argument</param>
+        private void OnTaskTimeLogResourceQueryExecution(object sender, EventArgs e)
+        {
+             DisplayTimeLogWindow();
+        }
+
+        /// <summary>
+        /// Get the Defect Log Resource Query Items
+        /// </summary>
+        /// <param name="sender">Command Sender</param>
+        /// <param name="e">Event Argument</param>
+        private void OnTaskMenuDefectLogResourceQueryItem(object sender, EventArgs e)
+        {
+            try
+            {
+                OleMenuCommand menuCommand = sender as OleMenuCommand;
+                if (null != menuCommand)
+                {
+                    menuCommand.Text = _defectLogMenu;
+                    menuCommand.Visible = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+
+        }
+
+        /// <summary>
+        /// Update the Defect Log Resource Query Execution
+        /// </summary>
+        /// <param name="sender">Command Sender</param>
+        /// <param name="e">Event Argument</param>
+        private void OnTaskDefectLogResourceQueryExecution(object sender, EventArgs e)
+        {
+            DisplayDefectLogWindow();
         }
 
         /// <summary>
@@ -1800,17 +1967,25 @@ namespace Process_DashboardToolBar
         /// <param name="e">Event Argument</param>
         private void OnTaskResourceQueryItem(object sender, EventArgs e)
         {
-            OleMenuCommand menuCommand = sender as OleMenuCommand;
-            if (null != menuCommand)
+            try
             {
-                int MRUItemIndex = menuCommand.CommandID.ID - baseMRUID;
-                if (MRUItemIndex >= 0 && MRUItemIndex < _activeTaskResourceList.Count)
+                OleMenuCommand menuCommand = sender as OleMenuCommand;
+                if (null != menuCommand)
                 {
-                    //Display the Text for the Menu Command
-                    menuCommand.Text = _activeTaskResourceList[MRUItemIndex].name;
-                    menuCommand.Visible = true;
+                    int MRUItemIndex = menuCommand.CommandID.ID - baseMRUID;
+                    if (MRUItemIndex >= 0 && MRUItemIndex < _activeTaskResourceList.Count)
+                    {
+                        //Display the Text for the Menu Command
+                        menuCommand.Text = _activeTaskResourceList[MRUItemIndex].name;
+                        menuCommand.Visible = true;
+                    }
                 }
             }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+           
         }
 
         /// <summary>
@@ -1820,25 +1995,33 @@ namespace Process_DashboardToolBar
         /// <param name="e">Event Argument</param>
         private void OnTaskResourceQueryExecution(object sender, EventArgs e)
         {
-            var menuCommand = sender as OleMenuCommand;
-            if (null != menuCommand)
+            try
             {
-                int MRUItemIndex = menuCommand.CommandID.ID - baseMRUID;
-                if (MRUItemIndex >= 0 && MRUItemIndex < _activeTaskResourceList.Count)
+                var menuCommand = sender as OleMenuCommand;
+                if (null != menuCommand)
                 {
-                     _currentTaskResourceID = _activeTaskResourceList[MRUItemIndex];
+                    int MRUItemIndex = menuCommand.CommandID.ID - baseMRUID;
+                    if (MRUItemIndex >= 0 && MRUItemIndex < _activeTaskResourceList.Count)
+                    {
+                        _currentTaskResourceID = _activeTaskResourceList[MRUItemIndex];
 
-                    //Check if there is a Trigger than Run the Trigger and Get the Response.
-                    if(_currentTaskResourceID.trigger == true)
-                    {
-                        ProcessReportOnRequestedTaskResourceURI();
-                    }else
-                    {
-                        ProcessReportOnTaskResourceChange(_currentTaskResourceID.uri);
+                        //Check if there is a Trigger than Run the Trigger and Get the Response.
+                        if (_currentTaskResourceID.trigger == true)
+                        {
+                            ProcessReportOnRequestedTaskResourceURI();
+                        }
+                        else
+                        {
+                            ProcessReportOnTaskResourceChange(_currentTaskResourceID.uri);
+                        }
                     }
-                    
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+         
         }
 
         /// <summary>
@@ -1847,26 +2030,34 @@ namespace Process_DashboardToolBar
         /// <param name="reportURL">Report URL</param>
         private void ProcessReportOnTaskResourceChange(string reportURL)
         {
-            //Get the Service From the Browsing Engine from the Visual Studio
-            var service = Package.GetGlobalService(typeof(SVsWebBrowsingService)) as IVsWebBrowsingService;
-
-            if (service != null && reportURL.Length >0 )
+            try
             {
-                string strFullURL = String.Format("http://localhost:2468{0}", reportURL);
-                //Window Frame Object
-                IVsWindowFrame pFrame = null;
-                var filePath = strFullURL;
+                //Get the Service From the Browsing Engine from the Visual Studio
+                var service = Package.GetGlobalService(typeof(SVsWebBrowsingService)) as IVsWebBrowsingService;
 
-                //Navigate to the URL with the Frame
-                service.Navigate(filePath, (uint)__VSWBNAVIGATEFLAGS.VSNWB_WebURLOnly, out pFrame);
-
-                if(pFrame !=null)
+                if (service != null && reportURL.Length > 0)
                 {
-                    //Display the Window Inside Visual Studio
-                    pFrame.Show();
+                    string strFullURL = String.Format("http://localhost:2468{0}", reportURL);
+                    //Window Frame Object
+                    IVsWindowFrame pFrame = null;
+                    var filePath = strFullURL;
+
+                    //Navigate to the URL with the Frame
+                    service.Navigate(filePath, (uint)__VSWBNAVIGATEFLAGS.VSNWB_WebURLOnly, out pFrame);
+
+                    if (pFrame != null)
+                    {
+                        //Display the Window Inside Visual Studio
+                        pFrame.Show();
+                    }
+
                 }
-                
             }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+           
            
         }
 
@@ -2130,7 +2321,18 @@ namespace Process_DashboardToolBar
         /// <summary>
         /// Number for the Base MRU List
         /// </summary>
-        private int baseMRUID = (int)cmdidMRUList;    
+        private int baseMRUID = (int)cmdidMRUList;
+
+        /// <summary>
+        /// Time Log Menu
+        /// </summary>
+        private string _timeLogMenu = "Time Log";
+
+
+        /// <summary>
+        /// Defect Log Menu
+        /// </summary>
+        private string _defectLogMenu = "Defect Log";
 
         #endregion
     }
