@@ -45,12 +45,14 @@
           <CommandName>Process DashboardToolbar</CommandName>
         </Strings>
       </Menu>
+
+         
       
       <Menu guid="guidProcessDashboardCommandPackageCmdSet" id="TopLevelMenu" priority="0x700" type="Menu">
-        <Parent guid="guidSHLMainMenu" id="IDG_VS_MM_TOOLSADDINS" />
+        <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
         <Strings>
-          <ButtonText>TestMenu</ButtonText>
-          <CommandName>TestMenu</CommandName>
+          <ButtonText>Open</ButtonText>
+          <CommandName>Open</CommandName>
         </Strings>
       </Menu>
 
@@ -61,6 +63,9 @@
           <CommandName>Sub Menu</CommandName>
         </Strings>
       </Menu>
+
+   
+
     </Menus>
     
     <Groups>
@@ -145,7 +150,7 @@
         <CommandFlag>DynamicItemStart</CommandFlag>
         <Strings>
           <CommandName>cmdidMRUList</CommandName>
-          <ButtonText>Report List</ButtonText>
+          <ButtonText>Report</ButtonText>
         </Strings>
       </Button>
       

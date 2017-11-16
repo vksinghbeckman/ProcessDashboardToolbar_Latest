@@ -127,7 +127,23 @@ namespace Process_DashboardToolBar
 
             IsProcessDashboardRunning = false;
 
-         }
+            //Clear the Task Resource List
+            if(_activeTaskResourceList == null)
+            {
+                //Create the Project task List
+                _activeTaskResourceList = new List<Resource>();
+                _activeTaskResourceList.Clear();
+            }
+
+            //Clear the Task Resource List
+            if (_oldTaskResourceList == null)
+            {
+                //Create the Project task List
+                _oldTaskResourceList = new List<Resource>();
+                _oldTaskResourceList.Clear();
+            }            
+
+    }
         #endregion
 
         #region Package Members
@@ -177,8 +193,6 @@ namespace Process_DashboardToolBar
         private void InitializeCommandHandlers()
         {
             var mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
-
-            this.InitMRUMenu(mcs);
 
             if (null == mcs) return;
 
@@ -995,6 +1009,9 @@ namespace Process_DashboardToolBar
 
                     //Clear the Timer State and Update the Same on Startup
                     ClearAndUpdateTimersStateOnSelectionChange();
+
+                    //Get teh Active Task Resource List
+                    GetActiveTaskResourcesList();
                 }
 
             }
@@ -1192,7 +1209,9 @@ namespace Process_DashboardToolBar
                 //Update the Button States
                 _playButton.Enabled = false;
                 _pauseButton.Enabled = false;
-                _finishButton.Enabled = false;               
+                _finishButton.Enabled = false;
+                _defectButton.Enabled = false;
+                _reportButton.Enabled = false;
             }
             else
             {
@@ -1200,12 +1219,14 @@ namespace Process_DashboardToolBar
                 _playButton.Visible = true;
                 _pauseButton.Visible = true;
                 _finishButton.Visible = true;
+                _defectButton.Visible = true;
+                _reportButton.Visible = true;
 
                 _playButton.Enabled = true;
                 _pauseButton.Enabled = true;
                 _finishButton.Enabled = true;
-                
-
+                _defectButton.Enabled = true;
+                _reportButton.Enabled = true;
             }
         }
 
@@ -1476,6 +1497,8 @@ namespace Process_DashboardToolBar
                     // update the list of tasks within the current project
                     ProcessSetActiveTaskIDBasedOnProjectStat(true);                
                     break;
+                case "notifications":
+                    break;
                 default:
                     break;
             }
@@ -1590,6 +1613,9 @@ namespace Process_DashboardToolBar
 
                     if (taskResourceInfo != null)
                     {
+                        //Make the Old Task Resource List to Active Task Resource List
+                        _oldTaskResourceList = _activeTaskResourceList;
+
                         //Clear the List
                         _activeTaskResourceList.Clear();
 
@@ -1600,8 +1626,10 @@ namespace Process_DashboardToolBar
                             _activeTaskResourceList.Add(item);
                         }
                     }
-                }
-                
+
+                    //Process the Task Resource Menu Items
+                    ProcessTasKResourceMenuItems();
+                }                
 
             }
             catch (Exception ex)
@@ -1660,67 +1688,135 @@ namespace Process_DashboardToolBar
             Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
         }
 
-        private void InitializeMRUList()
+        /// <summary>
+        /// Update the Task Resource Menu Items
+        /// </summary>
+        private void ProcessTasKResourceMenuItems()
         {
-            if (null == this.mruList)
-            {
-                this.mruList = new ArrayList();
-                if (null != this.mruList)
-                {
-                    for (int i = 0; i < this.numMRUItems; i++)
-                    {
-                        this.mruList.Add(string.Format(CultureInfo.CurrentCulture,
-                            "Item {0}", i + 1));
-                    }
-                }
-            }
-        }
+            //Get the Service from Ole Menu Command Service
+            var mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+            
+            //Check for NULL
+            if (null == mcs)
+                return;
 
-        private void InitMRUMenu(OleMenuCommandService mcs)
-        {
-            InitializeMRUList();
-            for (int i = 0; i < this.numMRUItems; i++)
+            //Prepare the Command Handlers
+            for (int i = 0; i < _activeTaskResourceList.Capacity; i++)
             {
                 var cmdID = new CommandID(
                     GuidList.guidProcessDashboardCommandPackageCmdSet, this.baseMRUID + i);
                 var mc = new OleMenuCommand(
-                    new EventHandler(OnMRUExec), cmdID);
-                mc.BeforeQueryStatus += new EventHandler(OnMRUQueryStatus);
+                    new EventHandler(OnTaskResourceQueryExecution), cmdID);
+                mc.BeforeQueryStatus += new EventHandler(OnTaskResourceQueryItem);
+
+                //Add the Command to the Queue
                 mcs.AddCommand(mc);
             }
         }
 
-        private void OnMRUQueryStatus(object sender, EventArgs e)
+        /// <summary>
+        /// Get the Task Resource Query Items
+        /// </summary>
+        /// <param name="sender">Command Sender</param>
+        /// <param name="e">Event Argument</param>
+        private void OnTaskResourceQueryItem(object sender, EventArgs e)
         {
             OleMenuCommand menuCommand = sender as OleMenuCommand;
             if (null != menuCommand)
             {
-                int MRUItemIndex = menuCommand.CommandID.ID - this.baseMRUID;
-                if (MRUItemIndex >= 0 && MRUItemIndex < this.mruList.Count)
+                int MRUItemIndex = menuCommand.CommandID.ID - baseMRUID;
+                if (MRUItemIndex >= 0 && MRUItemIndex < _activeTaskResourceList.Count)
                 {
-                    menuCommand.Text = this.mruList[MRUItemIndex] as string;
+                    //Display the Text for the Menu Command
+                    menuCommand.Text = _activeTaskResourceList[MRUItemIndex].name;
                 }
             }
         }
 
-        private void OnMRUExec(object sender, EventArgs e)
+        /// <summary>
+        /// Update the Task Resource Query Execution
+        /// </summary>
+        /// <param name="sender">Command Sender</param>
+        /// <param name="e">Event Argument</param>
+        private void OnTaskResourceQueryExecution(object sender, EventArgs e)
         {
             var menuCommand = sender as OleMenuCommand;
             if (null != menuCommand)
             {
-                int MRUItemIndex = menuCommand.CommandID.ID - this.baseMRUID;
-                if (MRUItemIndex >= 0 && MRUItemIndex < this.mruList.Count)
+                int MRUItemIndex = menuCommand.CommandID.ID - baseMRUID;
+                if (MRUItemIndex >= 0 && MRUItemIndex < _activeTaskResourceList.Count)
                 {
-                    string selection = this.mruList[MRUItemIndex] as string;
-                    for (int i = MRUItemIndex; i > 0; i--)
-                    {
-                        this.mruList[i] = this.mruList[i - 1];
-                    }
-                    this.mruList[0] = selection;
                     System.Windows.Forms.MessageBox.Show(
-                        string.Format(CultureInfo.CurrentCulture,
-                                      "Selected {0}", selection));
+                    string.Format(CultureInfo.CurrentCulture,
+                               "Selected {0}", _activeTaskResourceList[MRUItemIndex].name));
+
+                    _currentTaskResourceID = _activeTaskResourceList[MRUItemIndex];
+
+                    //Check if there is a Trigger than Run the Trigger and Get the Response.
+                    if(_currentTaskResourceID.trigger == true)
+                    {
+                        ProcessReportOnRequestedTaskResourceURI();
+                    }else
+                    {
+                        ProcessReportOnTaskResourceChange(_currentTaskResourceID.uri);
+                    }
+                    
                 }
+            }
+        }
+
+        /// <summary>
+        /// Process the Task Report on Task Resource Change 
+        /// </summary>
+        /// <param name="reportURL">Report URL</param>
+        private void ProcessReportOnTaskResourceChange(string reportURL)
+        {
+            //Get the Service From the Browsing Engine from the Visual Studio
+            var service = Package.GetGlobalService(typeof(SVsWebBrowsingService)) as IVsWebBrowsingService;
+
+            if (service != null && reportURL.Length >0 )
+            {
+                //Window Frame Object
+                IVsWindowFrame pFrame = null;
+                var filePath = reportURL;
+
+                //Navigate to the URL with the Frame
+                service.Navigate(filePath, (uint)__VSWBNAVIGATEFLAGS.VSNWB_WebURLOnly, out pFrame);
+
+                if(pFrame !=null)
+                {
+                    //Display the Window Inside Visual Studio
+                    pFrame.Show();
+                }
+                
+            }
+           
+        }
+
+        /// <summary>
+        /// Get the Report Based on the Selected Task Resource URI
+        /// </summary>
+        private async void ProcessReportOnRequestedTaskResourceURI()
+        {
+            try
+            {
+                //Check if the Resource ID is NULL and the Task resource ID 
+               if (_currentTaskResourceID != null && _currentTaskResourceID.uri.Length > 0)
+                {
+                    TriggerResponse resTriggerResponse = await _pDashAPI.RunTrigger(_currentTaskResourceID.uri);
+
+                    if (resTriggerResponse != null)
+                    {
+                        //Handle the Trigger Reponse
+                        HandleTriggerResponse(resTriggerResponse);
+                    }                   
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                UpdateUIControls(false);
             }
         }
 
@@ -1850,6 +1946,11 @@ namespace Process_DashboardToolBar
         private List<Resource> _activeTaskResourceList;
 
         /// <summary>
+        /// Old Task Resource List
+        /// </summary>
+        private List<Resource> _oldTaskResourceList;
+
+        /// <summary>
         /// Finish Button State
         /// </summary>
         private bool _finishButtonStatus;
@@ -1873,6 +1974,11 @@ namespace Process_DashboardToolBar
         /// Current Task Choice
         /// </summary>
         private string _currentTaskChoice;
+
+        /// <summary>
+        /// Summart Current Task Resource ID
+        /// </summary>
+        private Resource _currentTaskResourceID;
 
 
         /// <summary>
@@ -1924,14 +2030,18 @@ namespace Process_DashboardToolBar
         /// <summary>
         /// Default Window ID for the Defect Window
         /// </summary>
+        /// 
         private IntPtr _defaultDefectWindowId = IntPtr.Zero;
 
+        /// <summary>
+        /// Command MRU List Data
+        /// </summary>
         public const uint cmdidMRUList = 0x201;
 
-        private int numMRUItems = 4;
-        private int baseMRUID = (int)cmdidMRUList;
-        private ArrayList mruList;
-
+        /// <summary>
+        /// Number for the Base MRU List
+        /// </summary>
+        private int baseMRUID = (int)cmdidMRUList;    
 
         #endregion
     }
