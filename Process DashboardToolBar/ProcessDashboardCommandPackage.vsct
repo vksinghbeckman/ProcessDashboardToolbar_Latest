@@ -48,7 +48,7 @@
 
          
       
-      <Menu guid="guidProcessDashboardCommandPackageCmdSet" id="TopLevelMenu" priority="0x700" type="Menu">
+      <Menu guid="guidProcessDashboardCommandPackageCmdSet" id="TopLevelMenu" priority="0x1004" type="Menu">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
         <Strings>
           <ButtonText>Open</ButtonText>
@@ -73,7 +73,7 @@
          <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="Toolbar" />
       </Group>
 
-      <Group guid="guidProcessDashboardCommandPackageCmdSet" id="MRUListGroup" priority="0x0100">
+      <Group guid="guidProcessDashboardCommandPackageCmdSet" id="MRUListGroup" priority="0x2000">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="TopLevelMenu"/>
       </Group>
       
@@ -128,16 +128,9 @@
         </Strings>
       </Button>
       
-       <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidOpenReport" priority="0x1003" type="Button">
-        <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
-         <Strings>
-          <ToolTipText>Open the Report</ToolTipText>
-          <ButtonText>Open</ButtonText>          
-        </Strings>
-      </Button>
-  
+     
 
-      <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidMRUList"  type="Button" priority="0x0100">
+      <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidMRUList"  type="Button" priority="0x1003">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="MRUListGroup" />
         <CommandFlag>DynamicItemStart</CommandFlag>
          <Strings>
@@ -199,7 +192,7 @@
     <!-- This is the guid used to group the menu commands together -->
     <GuidSymbol name="guidProcessDashboardCommandPackageCmdSet" value="{f68a2262-c31e-487f-a159-8f4ed0ab900b}">
       <IDSymbol name="ProcessDashboardMenuGroup" value="0x1020" />
-      <IDSymbol name="Toolbar" value="0x0200" />
+      <IDSymbol name="Toolbar" value="0x0500" />
       <IDSymbol name="cmdidPause" value="0x100" />
       <IDSymbol name="cmdidPlay" value="0x101" />
       <IDSymbol name="cmdidFinish" value="0x102" />
@@ -208,10 +201,9 @@
       <IDSymbol name="cmdidFinishCheck" value="0x105" />
       <IDSymbol name="cmdProjectDetails" value="0x106" />
       <IDSymbol name="cmdidProjectList" value="0x107" />    
-      <IDSymbol name="cmdidDefect" value="0x108" /> 
-      <IDSymbol name="cmdidOpenReport" value="0x109" />
+      <IDSymbol name="cmdidDefect" value="0x108" />
+      <IDSymbol name="cmdidMRUList" value="0x0200"/>
       <IDSymbol name="MRUListGroup" value="0x1200"/>
-      <IDSymbol name="cmdidMRUList" value="0x0500"/>
       <IDSymbol name="SubMenu" value="0x1100"/>
       <IDSymbol name="SubMenuGroup" value="0x1150"/>
       <IDSymbol name="cmdidTestSubCommand" value="0x0121"/>

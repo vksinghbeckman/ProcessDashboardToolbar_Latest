@@ -139,7 +139,7 @@ namespace Process_DashboardToolBar
             if (_oldTaskResourceList == null)
             {
                 //Create the Project task List
-                _oldTaskResourceList = new List<Resource>();
+                _oldTaskResourceList = new List<OleMenuCommand>();
                 _oldTaskResourceList.Clear();
             }            
 
@@ -326,13 +326,7 @@ namespace Process_DashboardToolBar
                             //Open the Defect Dialog
                             DisplayDefectDialog();                                
                         }
-                        break;
-                    case PkgCmdIDList.cmdidOpenReport:
-                        {
-                            //Open the Report Window
-                            ShowToolWindow();
-                        }
-                        break;        
+                        break;                     
                     default:
                         break;
                 }
@@ -415,6 +409,9 @@ namespace Process_DashboardToolBar
 
                     //Set the Current Task Choice to NULL        
                     _currentTaskChoice = "";
+
+                    //No Active Task Choice Information
+                    _currentActiveTaskInfo = null;
 
                     /* To DO Pending -- Need to Check this Logic Once the Project Change
                     How to Get the Information 
@@ -725,6 +722,9 @@ namespace Process_DashboardToolBar
 
                         //Set the Current Task Choice to NULL        
                         _currentTaskChoice = "";
+                        
+                        //Set the Current Active Task Information
+                        _currentActiveTaskInfo = null;
 
                         _projectComboList.Enabled = true;
                     }
@@ -765,6 +765,9 @@ namespace Process_DashboardToolBar
                         
                         //Update the Current Task
                         _currentTaskChoice = timerResponse.Timer.ActiveTask.FullName;
+
+                        //Current Task Choice 
+                        _currentActiveTaskInfo = timerResponse.Timer.ActiveTask;
 
                         //Set the Task List Infor
                         UpdateTaskListInfo(_currentTaskChoice);
@@ -1003,7 +1006,11 @@ namespace Process_DashboardToolBar
                     //Get the Task List Information
                     GetTaskListInformation();
 
+                    //Current Task Choice
                     _currentTaskChoice =  timerResponse.Timer.ActiveTask.FullName;
+                    
+                    //Set the Current Active Task Inforamtion
+                    _currentActiveTaskInfo = timerResponse.Timer.ActiveTask;
 
                     UpdateTaskListInfo(_currentTaskChoice);
 
@@ -1019,7 +1026,7 @@ namespace Process_DashboardToolBar
                     //Clear the Timer State and Update the Same on Startup
                     ClearAndUpdateTimersStateOnSelectionChange();
 
-                    //Get teh Active Task Resource List
+                    //Get the Active Task List
                     GetActiveTaskResourcesList();
                 }
 
@@ -1252,8 +1259,15 @@ namespace Process_DashboardToolBar
                 //Check the Timer Response
                 if (timerResponse != null)
                 {
+                    if(timerResponse.Timer.ActiveTask !=null)
+                    {
+                        //Set the Current Active Task
+                        _currentActiveTaskInfo = timerResponse.Timer.ActiveTask;
+                    }
+                   
+
                     //Based on the State of the Timer State, Set the Play and Pause Button
-                    if(timerResponse.Timer.Timing == true)
+                    if (timerResponse.Timer.Timing == true)
                     {
                         _pauseButton.Checked = false;
                         _playButton.Checked = true;
@@ -1296,7 +1310,10 @@ namespace Process_DashboardToolBar
                 {
                     //Get the Current Task Full Name
                     strCurrentTask = timerResponse.Timer.ActiveTask.FullName;
-                    
+
+                    //Current Active Task Information
+                    _currentActiveTaskInfo = timerResponse.Timer.ActiveTask;
+
                     //Set the Current Active Task On Project Change
                     SetCurrentActiveTaskAndUpdateUIOnProjectChange(strCurrentTask);
                 }
@@ -1365,6 +1382,9 @@ namespace Process_DashboardToolBar
 
             //Get the Selected Project Information
             GetSelectedProjectInformationOnStartup();
+
+            //Get teh Active Task Resource List
+              GetActiveTaskResourcesList();
 
         }
         /// <summary>
@@ -1613,24 +1633,16 @@ namespace Process_DashboardToolBar
         {
             try
             {
-                if(_activeProjectTaskList.Count == 0)
-                {
-                    //Get the Active Task List Information
-                    GetTaskListInformation();
-                }
+                //Get the Timer State
+                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
 
-                //Get the Current Selected Project Task
-                ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
-
-                if(projectTaskInfo != null && projectTaskInfo.id.Length>0)
+                //Check the Timer Response
+                if (timerResponse != null && timerResponse.Timer.ActiveTask != null)
                 {
-                    PDTaskResources taskResourceInfo = await _pDashAPI.GetTaskResourcesDeatails(projectTaskInfo.id);
+                    PDTaskResources taskResourceInfo = await _pDashAPI.GetTaskResourcesDeatails(timerResponse.Timer.ActiveTask.Id);
 
                     if (taskResourceInfo != null)
                     {
-                        //Make the Old Task Resource List to Active Task Resource List
-                        _oldTaskResourceList = _activeTaskResourceList;
-
                         //Clear the List
                         _activeTaskResourceList.Clear();
 
@@ -1644,12 +1656,14 @@ namespace Process_DashboardToolBar
 
                     //Process the Task Resource Menu Items
                     ProcessTasKResourceMenuItems();
-                }                
+
+                }
 
             }
+
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());               
+                Console.WriteLine(ex.ToString());
             }
 
         }
@@ -1715,6 +1729,9 @@ namespace Process_DashboardToolBar
         /// </summary>
         private void ProcessTasKResourceMenuItems()
         {
+            //Clear the Command List from Existing List
+            ClearCommandList();
+
             //Get the Service from Ole Menu Command Service
             var mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             
@@ -1734,7 +1751,40 @@ namespace Process_DashboardToolBar
 
                 //Add the Command to the Queue
                 mcs.AddCommand(mc);
+                _oldTaskResourceList.Add(mc);
             }
+        }
+
+        /// <summary>
+        /// Clear Command the List
+        /// </summary>
+        private void ClearCommandList()
+        {
+            try
+            {
+                if (_oldTaskResourceList.Count > 0)
+                {
+                    //Get the Service from Ole Menu Command Service
+                    var mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+
+                    //Iterate through Each Item 
+                    foreach (var item in _oldTaskResourceList)
+                    {
+                        if (mcs != null && item != null)
+                        {
+                            //Remove the Command
+                            mcs.RemoveCommand(item);
+                        }
+                    }
+
+                    _oldTaskResourceList.Clear();
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+          
         }
 
         /// <summary>
@@ -1976,9 +2026,9 @@ namespace Process_DashboardToolBar
         private List<Resource> _activeTaskResourceList;
 
         /// <summary>
-        /// Old Task Resource List
+        /// Old Task Resource List for the Menu Item
         /// </summary>
-        private List<Resource> _oldTaskResourceList;
+        private List<OleMenuCommand> _oldTaskResourceList;
 
         /// <summary>
         /// Finish Button State
@@ -2004,6 +2054,9 @@ namespace Process_DashboardToolBar
         /// Current Task Choice
         /// </summary>
         private string _currentTaskChoice;
+
+        //Current Active Task Information
+        private Task _currentActiveTaskInfo;
 
         /// <summary>
         /// Summart Current Task Resource ID
@@ -2066,7 +2119,7 @@ namespace Process_DashboardToolBar
         /// <summary>
         /// Command MRU List Data
         /// </summary>
-        public const uint cmdidMRUList = 0x0501;
+        public const uint cmdidMRUList = 0x200;
 
         /// <summary>
         /// Number for the Base MRU List
