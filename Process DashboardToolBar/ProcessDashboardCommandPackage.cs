@@ -1205,10 +1205,16 @@ namespace Process_DashboardToolBar
                 _playButton.Enabled = false;
                 _pauseButton.Enabled = false;
                 _finishButton.Enabled = false;
-              
+
+                _openButton.Enabled = false;
+                _ReportListButton.Enabled = false;
+
+
             }
             else
             {
+                _openButton.Enabled = true;
+                _ReportListButton.Enabled = true;
                 projectTaskListComboBox.Enabled = true;                          
             }
         }
@@ -1383,8 +1389,8 @@ namespace Process_DashboardToolBar
             //Get the Selected Project Information
             GetSelectedProjectInformationOnStartup();
 
-            //Get teh Active Task Resource List
-              GetActiveTaskResourcesList();
+            //Get thh Active Task Resource List
+             GetActiveTaskResourcesList();
 
         }
         /// <summary>
