@@ -1654,17 +1654,25 @@ namespace Process_DashboardToolBar
                 // write code here to bring a window to the front,
                 // using the values in response.window.id,
                 // response.window.pid, or response.window.title
+
+                if((IntPtr)response.window.id !=IntPtr.Zero)
+                {
+                    SetForegroundWindow((IntPtr)response.window.id);
+                }
+               
             }
             else if (response.message != null)
             {
                 // write code here to display a message to the user,
                 // using the values in response.message.title and
                 // response.message.body
+                System.Windows.Forms.MessageBox.Show(response.message.body, response.message.title, MessageBoxButtons.OK);
             }
             else if (response.redirect != null)
             {
                 // write code here to open the redirect URI
                 // in a web browser tab
+                ProcessReportOnTaskResourceChange(_currentTaskResourceID.uri);
             }
         }
 
@@ -1688,6 +1696,25 @@ namespace Process_DashboardToolBar
             Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
         }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         /// <summary>
         /// Update the Task Resource Menu Items
         /// </summary>
@@ -1701,7 +1728,7 @@ namespace Process_DashboardToolBar
                 return;
 
             //Prepare the Command Handlers
-            for (int i = 0; i < _activeTaskResourceList.Capacity; i++)
+            for (int i = 0; i < _activeTaskResourceList.Count; i++)
             {
                 var cmdID = new CommandID(
                     GuidList.guidProcessDashboardCommandPackageCmdSet, this.baseMRUID + i);
@@ -1746,11 +1773,7 @@ namespace Process_DashboardToolBar
                 int MRUItemIndex = menuCommand.CommandID.ID - baseMRUID;
                 if (MRUItemIndex >= 0 && MRUItemIndex < _activeTaskResourceList.Count)
                 {
-                    System.Windows.Forms.MessageBox.Show(
-                    string.Format(CultureInfo.CurrentCulture,
-                               "Selected {0}", _activeTaskResourceList[MRUItemIndex].name));
-
-                    _currentTaskResourceID = _activeTaskResourceList[MRUItemIndex];
+                     _currentTaskResourceID = _activeTaskResourceList[MRUItemIndex];
 
                     //Check if there is a Trigger than Run the Trigger and Get the Response.
                     if(_currentTaskResourceID.trigger == true)
@@ -1776,9 +1799,10 @@ namespace Process_DashboardToolBar
 
             if (service != null && reportURL.Length >0 )
             {
+                string strFullURL = String.Format("http://localhost:2468{0}", reportURL);
                 //Window Frame Object
                 IVsWindowFrame pFrame = null;
-                var filePath = reportURL;
+                var filePath = strFullURL;
 
                 //Navigate to the URL with the Frame
                 service.Navigate(filePath, (uint)__VSWBNAVIGATEFLAGS.VSNWB_WebURLOnly, out pFrame);
@@ -2036,7 +2060,7 @@ namespace Process_DashboardToolBar
         /// <summary>
         /// Command MRU List Data
         /// </summary>
-        public const uint cmdidMRUList = 0x201;
+        public const uint cmdidMRUList = 0x0501;
 
         /// <summary>
         /// Number for the Base MRU List
