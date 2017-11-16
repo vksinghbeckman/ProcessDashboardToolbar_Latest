@@ -41,5 +41,11 @@ namespace Process_DashboardToolBar
         //Open the report
         cmdidOpenReport =0x109,
 
+        //Open Menu
+        cmidTopLevelMenu = 0x110,
+
+        //report list
+        cmdidReportList = 0x111,
+
     };
 }

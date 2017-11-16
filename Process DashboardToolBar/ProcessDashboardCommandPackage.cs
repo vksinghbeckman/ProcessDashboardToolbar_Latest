@@ -254,12 +254,17 @@ namespace Process_DashboardToolBar
                                     _defectButton = menuItem;
                                 }
                                 break;
-                            case PkgCmdIDList.cmdidOpenReport:
+                            case PkgCmdIDList.cmidTopLevelMenu:
                                 {
-                                    //Report button
-                                    _reportButton = menuItem;
+                                    _openButton = menuItem;
                                 }
                                 break;
+                            case PkgCmdIDList.cmdidReportList:
+                                {
+                                    _ReportListButton = menuItem;
+                                }
+                                break;
+
                             default:
                                 break;
                            
@@ -267,7 +272,11 @@ namespace Process_DashboardToolBar
                         break;
                 }
                 //Add the Command for Menu Item to the List
-                mcs.AddCommand(menuItem);
+                if(menuItem != _ReportListButton)
+                {
+                    mcs.AddCommand(menuItem);
+                }
+                
             }
         }
 
@@ -1220,13 +1229,13 @@ namespace Process_DashboardToolBar
                 _pauseButton.Visible = true;
                 _finishButton.Visible = true;
                 _defectButton.Visible = true;
-                _reportButton.Visible = true;
+            
 
                 _playButton.Enabled = true;
                 _pauseButton.Enabled = true;
                 _finishButton.Enabled = true;
                 _defectButton.Enabled = true;
-                _reportButton.Enabled = true;
+                
             }
         }
 
@@ -1604,6 +1613,12 @@ namespace Process_DashboardToolBar
         {
             try
             {
+                if(_activeProjectTaskList.Count == 0)
+                {
+                    //Get the Active Task List Information
+                    GetTaskListInformation();
+                }
+
                 //Get the Current Selected Project Task
                 ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
 
@@ -1634,8 +1649,7 @@ namespace Process_DashboardToolBar
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
-                UpdateUIControls(false);
+                Console.WriteLine(ex.ToString());               
             }
 
         }
@@ -1695,26 +1709,7 @@ namespace Process_DashboardToolBar
             IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
             Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        
         /// <summary>
         /// Update the Task Resource Menu Items
         /// </summary>
@@ -1724,7 +1719,7 @@ namespace Process_DashboardToolBar
             var mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             
             //Check for NULL
-            if (null == mcs)
+            if (null == mcs && _activeTaskResourceList.Count == 0)
                 return;
 
             //Prepare the Command Handlers
@@ -1734,6 +1729,7 @@ namespace Process_DashboardToolBar
                     GuidList.guidProcessDashboardCommandPackageCmdSet, this.baseMRUID + i);
                 var mc = new OleMenuCommand(
                     new EventHandler(OnTaskResourceQueryExecution), cmdID);
+                mc.Visible = false;
                 mc.BeforeQueryStatus += new EventHandler(OnTaskResourceQueryItem);
 
                 //Add the Command to the Queue
@@ -1756,6 +1752,7 @@ namespace Process_DashboardToolBar
                 {
                     //Display the Text for the Menu Command
                     menuCommand.Text = _activeTaskResourceList[MRUItemIndex].name;
+                    menuCommand.Visible = true;
                 }
             }
         }
@@ -1839,8 +1836,7 @@ namespace Process_DashboardToolBar
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
-                UpdateUIControls(false);
+                Console.WriteLine(ex.ToString());                
             }
         }
 
@@ -1933,6 +1929,16 @@ namespace Process_DashboardToolBar
         /// Report Button Menu Command
         /// </summary>
         private OleMenuCommand _reportButton;
+
+        /// <summary>
+        /// a
+        /// </summary>
+        private OleMenuCommand _openButton;
+
+        /// <summary>
+        /// Report List Button
+        /// </summary>
+        private OleMenuCommand _ReportListButton;
 
         /// <summary>
         /// Project Combo List
