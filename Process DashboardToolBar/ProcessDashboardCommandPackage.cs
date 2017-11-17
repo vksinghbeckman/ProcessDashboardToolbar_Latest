@@ -1478,7 +1478,7 @@ namespace Process_DashboardToolBar
 
             _listening = true;
             var errCount = 0;
-            while (errCount < 4)
+            while (errCount < 2)
             {
                 try
                 {
@@ -1494,12 +1494,12 @@ namespace Process_DashboardToolBar
                 {
                     Console.WriteLine(ex.ToString());
                     errCount++;
-                    await System.Threading.Tasks.Task.Delay(1000);
+                    await System.Threading.Tasks.Task.Delay(100);
                 }
             }
             _listening = false;
 
-            // TODO: update UI controls to tell the user that the dashboard is 
+            // update UI controls to tell the user that the dashboard is 
             // no longer running.
             UpdateUIControls(false);
         }
