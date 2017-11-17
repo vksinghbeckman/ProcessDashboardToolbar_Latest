@@ -47,5 +47,11 @@ namespace Process_DashboardToolBar
         //report list
         cmdidReportList = 0x111,
 
+        //Time Log Button
+        cmdidTimeLog = 0x400,
+
+        //Defect Log Button
+        cmdidDefectLog = 0x600,
+
     };
 }

@@ -76,6 +76,10 @@
       <Group guid="guidProcessDashboardCommandPackageCmdSet" id="MRUListGroup" priority="0x2000">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="TopLevelMenu"/>
       </Group>
+
+      <Group guid="guidProcessDashboardCommandPackageCmdSet" id="GlobalOpenGroup" priority="0x3000">
+        <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="TopLevelMenu"/>
+      </Group>
       
     </Groups>
 
@@ -136,6 +140,22 @@
          <Strings>
           <CommandName>cmdidMRUList</CommandName>
           <ButtonText>Report</ButtonText>
+        </Strings>
+      </Button>
+
+      <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidTimeLog" priority="0x1004" type="Button">
+        <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="GlobalOpenGroup" />       
+        <Strings>
+          <ToolTipText>Time Log</ToolTipText>
+          <ButtonText>Time Log</ButtonText>
+        </Strings>
+      </Button>
+      
+      <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidDefectLog" priority="0x1005" type="Button">
+        <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="GlobalOpenGroup" />
+        <Strings>
+          <ToolTipText>Defect Log</ToolTipText>
+          <ButtonText>Defect Log</ButtonText>
         </Strings>
       </Button>
       
@@ -202,8 +222,13 @@
       <IDSymbol name="cmdProjectDetails" value="0x106" />
       <IDSymbol name="cmdidProjectList" value="0x107" />    
       <IDSymbol name="cmdidDefect" value="0x108" />
+      
       <IDSymbol name="cmdidMRUList" value="0x0200"/>
+      <IDSymbol name="cmdidTimeLog" value="0x0400"/>
+      <IDSymbol name="cmdidDefectLog" value="0x0600"/>
+      
       <IDSymbol name="MRUListGroup" value="0x1200"/>
+      <IDSymbol name="GlobalOpenGroup" value="0x1300"/>      
       <IDSymbol name="SubMenu" value="0x1100"/>
       <IDSymbol name="SubMenuGroup" value="0x1150"/>
       <IDSymbol name="cmdidTestSubCommand" value="0x0121"/>

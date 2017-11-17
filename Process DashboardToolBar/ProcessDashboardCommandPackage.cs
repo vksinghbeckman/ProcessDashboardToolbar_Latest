@@ -264,7 +264,16 @@ namespace Process_DashboardToolBar
                                     _ReportListButton = menuItem;
                                 }
                                 break;
-
+                            case PkgCmdIDList.cmdidTimeLog:
+                                {
+                                    _TimeLogButton = menuItem;
+                                }
+                                break;
+                            case PkgCmdIDList.cmdidDefectLog:
+                                {
+                                    _DefectLogButton = menuItem;
+                                }
+                                break;
                             default:
                                 break;
                            
@@ -326,7 +335,17 @@ namespace Process_DashboardToolBar
                             //Open the Defect Dialog
                             DisplayDefectDialog();                                
                         }
-                        break;                     
+                        break;
+                    case PkgCmdIDList.cmdidTimeLog:
+                        {
+                            DisplayTimeLogWindow();
+                        }
+                        break;
+                    case PkgCmdIDList.cmdidDefectLog:
+                        {
+                            DisplayDefectLogWindow();
+                        }
+                        break;              
                     default:
                         break;
                 }
@@ -1825,32 +1844,7 @@ namespace Process_DashboardToolBar
                     //Add the Command to the Queue
                     mcs.AddCommand(mc);
                     _oldTaskResourceList.Add(mc);
-                }
-
-                //Time Log Menu Command Addition
-                var cmdTimeLogID = new CommandID(
-                      GuidList.guidProcessDashboardCommandPackageCmdSet, this.baseMRUID + _activeTaskResourceList.Count);
-                var mcTimelog = new OleMenuCommand(
-                    new EventHandler(OnTaskTimeLogResourceQueryExecution), cmdTimeLogID);
-                mcTimelog.Visible = false;
-                mcTimelog.BeforeQueryStatus += new EventHandler(OnTaskMenuTimeLogResourceQueryItem);
-
-
-                //Add the Time Log Command to the Queue
-                mcs.AddCommand(mcTimelog);
-                _oldTaskResourceList.Add(mcTimelog);
-
-                var cmdDefectLogID = new CommandID(
-                      GuidList.guidProcessDashboardCommandPackageCmdSet, this.baseMRUID + (_activeTaskResourceList.Count+1));
-                var mcDefectlog = new OleMenuCommand(
-                    new EventHandler(OnTaskDefectLogResourceQueryExecution), cmdDefectLogID);
-                mcDefectlog.Visible = false;
-                mcDefectlog.BeforeQueryStatus += new EventHandler(OnTaskMenuDefectLogResourceQueryItem);
-
-
-                //Add the Command to the Queue
-                mcs.AddCommand(mcDefectlog);
-                _oldTaskResourceList.Add(mcDefectlog);
+                }              
 
             }
 
@@ -2200,6 +2194,18 @@ namespace Process_DashboardToolBar
         /// Project Task Combo List
         /// </summary>
         private OleMenuCommand projectTaskListComboBox;
+
+
+        /// <summary>
+        /// Time Log Button
+        /// </summary>
+        private OleMenuCommand _TimeLogButton;
+
+
+        /// <summary>
+        /// Defect Log Button
+        /// </summary>
+        private OleMenuCommand _DefectLogButton;
 
         /// <summary>
         /// Activity Task Combo List
