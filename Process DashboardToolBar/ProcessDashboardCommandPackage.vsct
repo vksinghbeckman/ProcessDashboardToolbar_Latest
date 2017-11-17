@@ -115,7 +115,6 @@
      
       <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidFinish" priority="0x100" type="Button">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
-        <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
           <ToolTipText>Finish the Task for the Selected Task</ToolTipText>
@@ -137,6 +136,9 @@
       <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidMRUList"  type="Button" priority="0x1003">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="MRUListGroup" />
         <CommandFlag>DynamicItemStart</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
          <Strings>
           <CommandName>cmdidMRUList</CommandName>
           <ButtonText>Report</ButtonText>
@@ -144,7 +146,8 @@
       </Button>
 
       <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidTimeLog" priority="0x1004" type="Button">
-        <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="GlobalOpenGroup" />       
+        <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="GlobalOpenGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>    
         <Strings>
           <ToolTipText>Time Log</ToolTipText>
           <ButtonText>Time Log</ButtonText>
@@ -153,6 +156,7 @@
       
       <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidDefectLog" priority="0x1005" type="Button">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="GlobalOpenGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ToolTipText>Defect Log</ToolTipText>
           <ButtonText>Defect Log</ButtonText>

@@ -1223,17 +1223,18 @@ namespace Process_DashboardToolBar
                 projectTaskListComboBox.Enabled = false;
                 _playButton.Enabled = false;
                 _pauseButton.Enabled = false;
+                _defectButton.Enabled = false;
                 _finishButton.Enabled = false;
 
-                _openButton.Enabled = false;
-                _ReportListButton.Enabled = false;
-
+                ClearCommandList();
+                _TimeLogButton.Visible = false;
+                _DefectLogButton.Visible = false;
 
             }
             else
             {
-                _openButton.Enabled = true;
-                _ReportListButton.Enabled = true;
+                _TimeLogButton.Visible = true;
+                _DefectLogButton.Visible = true;
                 projectTaskListComboBox.Enabled = true;                          
             }
         }
@@ -1257,17 +1258,9 @@ namespace Process_DashboardToolBar
             else
             {
                 //Update the Button States
-                _playButton.Visible = true;
-                _pauseButton.Visible = true;
-                _finishButton.Visible = true;
-                _defectButton.Visible = true;
-            
-
                 _playButton.Enabled = true;
                 _pauseButton.Enabled = true;
                 _finishButton.Enabled = true;
-                _defectButton.Enabled = true;
-                
             }
         }
 
@@ -1823,6 +1816,9 @@ namespace Process_DashboardToolBar
             {
                 //Clear the Command List from Existing List
                 ClearCommandList();
+
+                // if resources are present, defect logging is probably allowed
+                _defectButton.Enabled = _activeTaskResourceList.Count > 0;
 
                 //Get the Service from Ole Menu Command Service
                 var mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
