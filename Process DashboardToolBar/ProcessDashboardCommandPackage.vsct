@@ -48,7 +48,7 @@
 
          
       
-      <Menu guid="guidProcessDashboardCommandPackageCmdSet" id="TopLevelMenu" priority="0x1004" type="Menu">
+      <Menu guid="guidProcessDashboardCommandPackageCmdSet" id="TopLevelMenu" priority="0x70" type="Menu">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
         <Strings>
           <ButtonText>Open</ButtonText>
@@ -91,7 +91,7 @@
               <CommandFlag>DynamicVisibility</CommandFlag>
           If you do not want an image next to your command, remove the Icon node /> -->
 
-      <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidPause" priority="0x0100" type="Button">
+      <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidPause" priority="0x40" type="Button">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
         <Icon guid="guidPauseImage" id="bmpPauseImage" />       
         <Strings>
@@ -100,7 +100,7 @@
         </Strings>
       </Button>
       
-      <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidPlay" priority="0x0100" type="Button">
+      <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidPlay" priority="0x50" type="Button">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
         <Icon guid="guidStartImage" id="bmpStartImage" />      
         <Strings>
@@ -109,7 +109,7 @@
         </Strings>
       </Button>
      
-      <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidFinish" priority="0x1001" type="Button">
+      <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidFinish" priority="0x100" type="Button">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>TextChanges</CommandFlag>
@@ -119,7 +119,7 @@
         </Strings>
       </Button>   
       
-        <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidDefect" priority="0x1002" type="Button">
+        <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidDefect" priority="0x60" type="Button">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
         <Icon guid="guidDefectImage" id="bmpDefectImage" />      
         <Strings>
@@ -155,7 +155,7 @@
         </Strings>
       </Combo>
       
-      <Combo guid="guidProcessDashboardCommandPackageCmdSet" id="cmdProjectDetails" priority="0x10" type="DropDownCombo" idCommandList="cmdidProjectList" defaultWidth="300">
+      <Combo guid="guidProcessDashboardCommandPackageCmdSet" id="cmdProjectDetails" priority="0x20" type="DropDownCombo" idCommandList="cmdidProjectList" defaultWidth="300">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
         <CommandFlag>StretchHorizontally</CommandFlag>
         <Strings>
