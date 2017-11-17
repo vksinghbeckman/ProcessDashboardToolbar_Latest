@@ -2037,7 +2037,11 @@ namespace Process_DashboardToolBar
 
                 if (service != null && reportURL.Length > 0)
                 {
-                    string strFullURL = String.Format("http://localhost:2468{0}", reportURL);
+                    string strFullURL;
+                    if (reportURL.StartsWith("http"))
+                        strFullURL = reportURL;
+                    else
+                        strFullURL = "http://localhost:2468" + reportURL;
                     //Window Frame Object
                     IVsWindowFrame pFrame = null;
                     var filePath = strFullURL;
