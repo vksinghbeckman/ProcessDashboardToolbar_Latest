@@ -103,15 +103,13 @@ namespace Process_DashboardToolBar
             }
 
             //Add the Project Details
-            _activityComboList.Add(_displayPDIsNotRunning);
+            _activityComboList.Add(_noConnectionState);
 
             if (_activityTaskList == null)
             {
                 //Create the Task List
                 _activityTaskList = new List<string>();
             }
-
-            _activityTaskList.Add("Enter the Task");
 
             if (_activeProjectList == null)
             {
@@ -378,6 +376,11 @@ namespace Process_DashboardToolBar
             {
                 // when vOut is non-NULL, the IDE is requesting the current value for the combo
                 Marshal.GetNativeVariantForObject(_currentSelectedProjectName, vOut);
+
+                if(_currentSelectedProjectName == _noConnectionState)
+                {
+                    UpdateCurrentSelectedProject(_currentSelectedProjectName);
+                }
             }
             else if (input != null)
             {
@@ -399,20 +402,29 @@ namespace Process_DashboardToolBar
                 var splitChoice = newChoice.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries); // Assume first is ID
 
                 //Check if the Display PD Is Not Running
-                if(newChoice == _displayPDIsNotRunning)
-                {
+                if(newChoice == _noConnectionState)
+                {                   
                     if (IsProcessDashboardRunning == false)
                     {
                          // Dialog box with two buttons: yes and no. [3]
-                         DialogResult result = MessageBox.Show(_displayPDStartRequired, _displayPDStartMsgTitle, MessageBoxButtons.OK,MessageBoxIcon.Error);
+                         DialogResult result = MessageBox.Show(_displayPDStartRequired, _displayPDStartMsgTitle, MessageBoxButtons.OKCancel,MessageBoxIcon.None);
 
                         if(result == DialogResult.OK)
                         {
                             //Try to Get the Data to Sync Up the Process Data
                             SyncUpProcessDashboardDataOnManualProcessStart();
                         }                       
+                    }                   
+
+                    if (_currentTaskChoice == "")
+                    {
+                        projectTaskListComboBox.Enabled = false;
+                        UpdateUIControls(false);
                     }
-                   
+
+                    _currentSelectedProjectName = _noConnectionState;
+                    //Update the Selected Project Information
+                    UpdateCurrentSelectedProject(newChoice);
                 }
                
                 else
@@ -436,8 +448,7 @@ namespace Process_DashboardToolBar
                     How to Get the Information 
                     //Get the Current Active Task and Update the UI Once the Project Name Changed By the User
                     */
-                    ProcessSetActiveTaskIDBasedOnProjectStat(true);
-                    
+                    ProcessSetActiveTaskIDBasedOnProjectStat(true);      
                    
                 }
                 
@@ -500,6 +511,12 @@ namespace Process_DashboardToolBar
             {
                 // when vOut is non-NULL, the IDE is requesting the current value for the combo
                 Marshal.GetNativeVariantForObject(_currentTaskChoice, vOut);
+
+                if (_currentTaskChoice == "" || _currentTaskChoice == _noConnectionState || _currentTaskChoice ==null || _currentTaskChoice==_noTaskPresent)
+                {
+                    projectTaskListComboBox.Enabled = false;
+                    UpdateUIControls(false);
+                }
             }
             else if (input != null)
             {
@@ -785,6 +802,11 @@ namespace Process_DashboardToolBar
                         //Update the Current Task
                         _currentTaskChoice = timerResponse.Timer.ActiveTask.FullName;
 
+                        if(_currentTaskChoice == null)
+                        {
+                            _currentTaskChoice = _noTaskPresent;
+                        }
+
                         //Current Task Choice 
                         _currentActiveTaskInfo = timerResponse.Timer.ActiveTask;
 
@@ -802,6 +824,11 @@ namespace Process_DashboardToolBar
 
                         //Update the Task Resources List
                         GetActiveTaskResourcesList();
+
+                        if (_currentTaskChoice == _noTaskPresent)
+                        {
+                            UpdateUIControls(false);
+                        }
 
                     }
                  
@@ -1220,8 +1247,7 @@ namespace Process_DashboardToolBar
             if(bState == false)
             {
                 
-                projectTaskListComboBox.Enabled = false;
-                _playButton.Enabled = false;
+                 _playButton.Enabled = false;
                 _pauseButton.Enabled = false;
                 _defectButton.Enabled = false;
                 _finishButton.Enabled = false;
@@ -1253,7 +1279,7 @@ namespace Process_DashboardToolBar
                 _pauseButton.Enabled = false;
                 _finishButton.Enabled = false;
                 _defectButton.Enabled = false;
-                _reportButton.Enabled = false;
+                             
             }
             else
             {
@@ -1281,8 +1307,7 @@ namespace Process_DashboardToolBar
                     {
                         //Set the Current Active Task
                         _currentActiveTaskInfo = timerResponse.Timer.ActiveTask;
-                    }
-                   
+                    }                   
 
                     //Based on the State of the Timer State, Set the Play and Pause Button
                     if (timerResponse.Timer.Timing == true)
@@ -1443,6 +1468,17 @@ namespace Process_DashboardToolBar
             {
                 UpdateDetailsOnDashboardProcessStartUp();
             }
+            else
+            {
+                // Dialog box with two buttons: yes and no. [3]
+                DialogResult result = MessageBox.Show(_displayPDConnectionFailed, _displayPDConnectFailedTitle, MessageBoxButtons.OKCancel, MessageBoxIcon.None);
+
+                if (result == DialogResult.OK)
+                {
+                   
+                }
+                
+            }
         }
 
         /// <summary>
@@ -1499,11 +1535,56 @@ namespace Process_DashboardToolBar
             }
             _listening = false;
 
+            //Update the Connection State to No Connection State
+            UpdateConnnectionState(false);
+
             // update UI controls to tell the user that the dashboard is 
             // no longer running.
             UpdateUIControls(false);
         }
 
+
+        /// <summary>
+        /// Update the Connection State Based on Connection and Disconnection
+        /// </summary>
+        /// <param name="bState"></param>
+        private void UpdateConnnectionState(bool bState)
+        {
+            if (bState == true)
+            {
+
+            }
+            else
+            {
+                _currentSelectedProjectName = _noConnectionState;
+                _projectComboList.Enabled = true;
+                _activityComboList.Clear();
+                UpdateCurrentSelectedProject(_currentSelectedProjectName);
+                _currentTaskChoice = "";
+                _activityTaskList.Clear();
+                _activeProjectList.Clear();
+                UpdateTaskDisconnectState(_currentTaskChoice);
+                IsProcessDashboardRunning = false;
+            }
+        }
+
+        /// <summary>
+        /// Manage updating the Task ListInformation
+        /// Keeps most recently searched for item at the top of the list.
+        /// </summary>
+        /// <param name="listItem">Work item to add to the list or move to top of the list.</param>
+        private void UpdateTaskDisconnectState(string currentTask)
+        {
+            // If the current item is in the list, remove and add at the top
+            if (_activityTaskList.Contains(currentTask))
+            {
+                _activityTaskList.Remove(currentTask);
+            }
+
+            projectTaskListComboBox.Enabled = true;          
+            _activityTaskList.Insert(0, _currentTaskChoice);                 
+
+        }
 
 
         /// <summary>
@@ -2275,13 +2356,20 @@ namespace Process_DashboardToolBar
         /// <summary>
         /// Display Message that need to be Displayed for Error Related Information
         /// </summary>
-        private string _displayPDStartRequired = "Process Dashboard is not Running. Please Start the Process Dashboard Application Manually to use the Process Dashboard Toolbar";
+        private string _displayPDStartRequired = "Visual Studio is Not Currently Connected to the Process Dashboard.\n Please start your personal Process Dashboard if it is not aleady running. Than click OK to connect Visual Studio to dashboard";
 
-
+        /// <summary>
+        /// Failed Connection Messsage Title
+        /// </summary>
+        private string _displayPDConnectFailedTitle = "Could not Connect to the Process Dashboard";
+        /// <summary>
+        /// Message to be Displayed for Connection Failed
+        /// </summary>
+        private string _displayPDConnectionFailed = "Visual Studio attemted to Connect to the Process Dashboard, but the Connection was unsuccessfull.\n If the Process Dashboard is running, please close and reopen it. Otherwise, please start the dashboard and Click OK to connect to Visual Studio";
         /// <summary>
         /// Display for the Error Message Related to Message Title
         /// </summary>
-        private string _displayPDStartMsgTitle = "Process Dashboard is Not Running";
+        private string _displayPDStartMsgTitle = "Not Connected to Process Dashboard";
 
         /// <summary>
         /// Process Dashboard Running Status
@@ -2339,6 +2427,16 @@ namespace Process_DashboardToolBar
         /// Defect Log Menu
         /// </summary>
         private string _defectLogMenu = "Defect Log";
+
+        /// <summary>
+        /// No Task Present Messsage
+        /// </summary>
+        private string _noTaskPresent = "(No Task Present)";
+
+        /// <summary>
+        /// No Connection State
+        /// </summary>
+        private string _noConnectionState = "NO CONNECTION";
 
         #endregion
     }
