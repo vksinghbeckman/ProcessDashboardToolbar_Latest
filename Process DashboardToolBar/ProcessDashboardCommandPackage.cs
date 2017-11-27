@@ -377,9 +377,9 @@ namespace Process_DashboardToolBar
                 // when vOut is non-NULL, the IDE is requesting the current value for the combo
                 Marshal.GetNativeVariantForObject(_currentSelectedProjectName, vOut);
 
-                if(_currentSelectedProjectName == _noConnectionState)
+                if(_currentSelectedProjectName == _noConnectionState || _currentSelectedProjectName == "")
                 {
-                    UpdateCurrentSelectedProject(_currentSelectedProjectName);
+                    UpdateCurrentSelectedProject(_noConnectionState);
                 }
             }
             else if (input != null)
@@ -763,6 +763,9 @@ namespace Process_DashboardToolBar
                         _currentActiveTaskInfo = null;
 
                         _projectComboList.Enabled = true;
+
+                        //Update the Defect Button State
+                        UpdateDefectButtonState(timerResponse.Timer.defectsAllowed);
                     }
                    
                 }
@@ -829,6 +832,8 @@ namespace Process_DashboardToolBar
                         {
                             UpdateUIControls(false);
                         }
+                        //Update the Defect Button State
+                        UpdateDefectButtonState(timerResponse.Timer.defectsAllowed);
 
                     }
                  
@@ -982,6 +987,9 @@ namespace Process_DashboardToolBar
                 {
                     //Update the Complete Button Status on Startup
                     UpdatetheCompleteButtonStateOnCompleteTime(timerResponse.Timer.ActiveTask.CompletionDate.ToString());
+
+                    //Update the Defect Button State
+                    UpdateDefectButtonState(timerResponse.Timer.defectsAllowed);
                 }
 
             }
@@ -1074,6 +1082,9 @@ namespace Process_DashboardToolBar
 
                     //Get the Active Task List
                     GetActiveTaskResourcesList();
+
+                    //Update the defect button State
+                    UpdateDefectButtonState(timerResponse.Timer.defectsAllowed);
                 }
 
             }
@@ -1323,6 +1334,9 @@ namespace Process_DashboardToolBar
                         _playButton.Checked = false;
                         _playButton.Enabled = true;
                     }
+
+                    //Update the Defect Button State
+                    UpdateDefectButtonState(timerResponse.Timer.defectsAllowed);
                 }
 
             }
@@ -1359,6 +1373,9 @@ namespace Process_DashboardToolBar
 
                     //Set the Current Active Task On Project Change
                     SetCurrentActiveTaskAndUpdateUIOnProjectChange(strCurrentTask);
+
+                    //Update the Defect Button State
+                    UpdateDefectButtonState(timerResponse.Timer.defectsAllowed);
                 }
 
             }
@@ -1475,7 +1492,14 @@ namespace Process_DashboardToolBar
 
                 if (result == DialogResult.OK)
                 {
-                   
+                    //Get the Project Lidt from the Information
+                    GetProjectListInformationOnStartup();
+
+                    //Check if the Process Dashboard is Running and Alive
+                    if (IsProcessDashboardRunning == true)
+                    {
+                        UpdateDetailsOnDashboardProcessStartUp();
+                    }
                 }
                 
             }
@@ -1813,6 +1837,9 @@ namespace Process_DashboardToolBar
                     //Process the Task Resource Menu Items
                     ProcessTasKResourceMenuItems();
 
+                    //Update the Defect button State
+                    UpdateDefectButtonState(timerResponse.Timer.defectsAllowed);
+
                 }
 
             }
@@ -2131,8 +2158,7 @@ namespace Process_DashboardToolBar
             catch(Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-            }
-           
+            }          
            
         }
 
@@ -2162,6 +2188,14 @@ namespace Process_DashboardToolBar
             }
         }
 
+        /// <summary>
+        /// Update the Defect Button State 
+        /// </summary>
+        /// <param name="bState"></param>
+        private void UpdateDefectButtonState(bool bState)
+        {
+            _defectButton.Enabled = bState;
+        }
 
         #endregion
 

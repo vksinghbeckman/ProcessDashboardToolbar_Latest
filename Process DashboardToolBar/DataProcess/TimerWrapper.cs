@@ -18,6 +18,7 @@ namespace Process_DashboardToolBar
     {
         public bool Timing { get; set; }
         public bool TimingAllowed { get; set; }
+        public bool defectsAllowed { get; set; }
         public Task ActiveTask { get; set; }
     }
 
