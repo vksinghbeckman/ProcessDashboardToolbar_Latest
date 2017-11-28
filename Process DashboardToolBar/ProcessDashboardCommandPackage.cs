@@ -23,6 +23,7 @@ using Process_DashboardToolBarTaskDetails;
 using System.Threading;
 using System.Drawing;
 using System.Collections;
+using System.Threading.Tasks;
 
 namespace Process_DashboardToolBar
 {
@@ -101,9 +102,6 @@ namespace Process_DashboardToolBar
                 //Create the List for the Project
                 _activityComboList = new List<string>();
             }
-
-            //Add the Project Details
-            _activityComboList.Add(_noConnectionState);
 
             if (_activityTaskList == null)
             {
@@ -422,9 +420,19 @@ namespace Process_DashboardToolBar
                         UpdateUIControls(false);
                     }
 
-                    _currentSelectedProjectName = _noConnectionState;
-                    //Update the Selected Project Information
-                    UpdateCurrentSelectedProject(newChoice);
+                    if (IsProcessDashboardRunning == false)
+                    {
+                        _currentSelectedProjectName = _noConnectionState;
+                        //Update the Selected Project Information
+                        UpdateCurrentSelectedProject(newChoice);
+                    }
+                    else
+                    {
+                        projectTaskListComboBox.Enabled = false;
+                        RemoveProjectItem(_noConnectionState);
+                        projectTaskListComboBox.Enabled = true;
+                    }
+                  
                 }
                
                 else
@@ -481,6 +489,11 @@ namespace Process_DashboardToolBar
                 }
                 else if (vOut != IntPtr.Zero)
                 {
+                    if(IsProcessDashboardRunning == true)
+                    {
+                        RemoveProjectItem(_noConnectionState);
+                    }
+                    
                     Marshal.GetNativeVariantForObject(_activityComboList.ToArray(), vOut);
                 }
                 else
@@ -516,6 +529,10 @@ namespace Process_DashboardToolBar
                 {
                     projectTaskListComboBox.Enabled = false;
                     UpdateUIControls(false);
+                }
+                else
+                {
+                    projectTaskListComboBox.Enabled = true;
                 }
             }
             else if (input != null)
@@ -1019,6 +1036,9 @@ namespace Process_DashboardToolBar
                 {
                     IsProcessDashboardRunning = true;
                     //Clear the List 
+
+                    //Clear the Project Item from the List
+                    RemoveProjectItem(_noConnectionState);
                     _activityComboList.Clear();
                     _activeProjectList.Clear();
 
@@ -1250,6 +1270,20 @@ namespace Process_DashboardToolBar
         }
 
         /// <summary>
+        /// Manage updating the work item list.
+        /// Keeps most recently searched for item at the top of the list.
+        /// </summary>
+        /// <param name="listItem">Work item to add to the list or move to top of the list.</param>
+        private void RemoveProjectItem(string listItem)
+        {
+            // If the current item is in the list, remove and add at the top
+            if (_activityComboList.Contains(listItem))
+            {
+                _activityComboList.Remove(listItem);
+            }           
+        }
+
+        /// <summary>
         /// Update UI Controls
         /// </summary>
         /// <param name="bState">Property State</param>
@@ -1446,6 +1480,9 @@ namespace Process_DashboardToolBar
             //Get thh Active Task Resource List
              GetActiveTaskResourcesList();
 
+            //Listen for Process Dashboard Events
+            ListenForProcessDashboardEvents();
+
         }
         /// <summary>
         /// Start the Process Dashboard Process
@@ -1471,15 +1508,14 @@ namespace Process_DashboardToolBar
                 Console.WriteLine(e.Message);
             }
         }
-
         /// <summary>
         /// Sync Up the Process Dashboard Once User Start Manually
         /// </summary>
         private void SyncUpProcessDashboardDataOnManualProcessStart()
         {
-            //Get the Project Lidt from the Information
+             //Get the Project Lidt from the Information
             GetProjectListInformationOnStartup();
-
+         
             //Check if the Process Dashboard is Running and Alive
             if (IsProcessDashboardRunning == true)
             {
@@ -1494,7 +1530,7 @@ namespace Process_DashboardToolBar
                 {
                     //Get the Project Lidt from the Information
                     GetProjectListInformationOnStartup();
-
+                   
                     //Check if the Process Dashboard is Running and Alive
                     if (IsProcessDashboardRunning == true)
                     {
@@ -1502,6 +1538,27 @@ namespace Process_DashboardToolBar
                     }
                 }
                 
+            }
+        }
+
+        /// <summary>
+        /// Check if Process Dashboard is Running or not
+        /// </summary>
+        private async void CheckIfProcessDashboardIsRunning()
+        {
+            try
+            {
+                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
+
+                if (timerResponse != null)
+                {
+                    IsProcessDashboardRunning = true;
+                }
+            }
+            catch(Exception ex)
+            {
+                IsProcessDashboardRunning = false;
+                Console.WriteLine(ex.ToString());
             }
         }
 
