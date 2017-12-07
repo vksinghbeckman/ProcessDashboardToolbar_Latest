@@ -6,9 +6,45 @@ using System.Threading.Tasks;
 
 namespace Process_DashboardToolBar
 {
-    /// <summary>
-    /// Wrapper Class for Timer 
-    /// </summary>
+    #region Transfer objects representing Process Dashboard entities
+
+    public class DashboardProject
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string FullName { get; set; }
+        public DateTime CreationDate { get; set; }
+    }
+
+    public class DashboardTask
+    {
+        public string Id { get; set; }
+        public string FullName { get; set; }
+        public DashboardProject Project { get; set; }
+        public DateTime? CompletionDate { get; set; }
+        public double EstimatedTime { get; set; }
+        public double ActualTime { get; set; }
+    }
+
+    public class DashboardResource
+    {
+        public string Name { get; set; }
+        public string Uri { get; set; }
+        public string TaskPath { get; set; }
+        public bool? Trigger { get; set; }
+    }
+
+    public class DashboardEvent
+    {
+        public int Id { get; set; }
+        public string Type { get; set; }
+    }
+
+    #endregion
+
+
+    #region Objects to hold the response data returned from REST APIs
+
     public class TimerApiResponse
     {
         public TimerData Timer { get; set; }
@@ -18,113 +54,66 @@ namespace Process_DashboardToolBar
     {
         public bool Timing { get; set; }
         public bool TimingAllowed { get; set; }
-        public bool defectsAllowed { get; set; }
-        public Task ActiveTask { get; set; }
+        public bool DefectsAllowed { get; set; }
+        public DashboardTask ActiveTask { get; set; }
     }
 
-    public class Task
-    {
-        public string Id { get; set; }
-        public string FullName { get; set; }
-        public Project Project { get; set; }
-        public DateTime? CompletionDate { get; set; }
-        public double EstimatedTime { get; set; }
-        public double ActualTime { get; set; }
-    }
-
-    public class Project
-    {
-        public string Id { get; set; }
-        public string Name { get; set; }
-        public DateTime CreationDate { get; set; }
-    }
     public class ProjectDetailsApiResponse
     {
-        public Project Project { get; set; }
+        public DashboardProject Project { get; set; }
         public string Stat { get; set; }
     }
 
-    public class ProjectIdDetails
+    public class ProjectListApiResponse
     {
-        public string id { get; set; }
-        public string name { get; set; }
-        public string fullName { get; set; }
-        public string creationDate { get; set; }
+        public List<DashboardProject> Projects { get; set; }
+        public string Stat { get; set; }
     }
 
-    public class ProejctsRootInfo
+    public class ProjectTaskListApiResponse
     {
-        public List<ProjectIdDetails> projects { get; set; }
-        public string stat { get; set; }
+        public List<DashboardTask> ProjectTasks { get; set; }
+        public DashboardProject ForProject { get; set; }
+        public string Stat { get; set; }
     }
 
-    public class ProjectTask
+    public class TaskDetailsApiResponse
     {
-        public string id { get; set; }
-        public string fullName { get; set; }
-        public DateTime? completionDate { get; set; }
+        public DashboardTask Task { get; set; }
+        public string Stat { get; set; }
     }
 
-    public class ForProject
+    public class TaskResourcesApiResponse
     {
-        public string id { get; set; }
-        public string name { get; set; }
-        public string fullName { get; set; }
-        public DateTime creationDate { get; set; }
+        public List<DashboardResource> Resources { get; set; }
+        public string Stat { get; set; }
     }
 
-    public class ProjectTaskDetails
+    public class TriggerApiResponse
     {
-        public List<ProjectTask> projectTasks { get; set; }
-        public ForProject forProject { get; set; }
-        public string stat { get; set; }
+        public TriggerWindow Window { get; set; }
+        public TriggerMessage Message { get; set; }
+        public string Redirect { get; set; }
+        public string Stat { get; set; }
+    }
+    public class TriggerWindow
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+    }
+    public class TriggerMessage
+    {
+        public string Title { get; set; }
+        public string Body { get; set; }
     }
 
-    public class ProjectGetDetails
+    public class DashboardEventsApiResponse
     {
-        public string id { get; set; }
-        public string name { get; set; }
-        public string fullName { get; set; }
-        public DateTime creationDate { get; set; }
+        public List<DashboardEvent> Events { get; set; }
+        public string NextUri { get; set; }
+        public string Stat { get; set; }
     }
 
-    public class TaskDetails
-    {
-        public string id { get; set; }
-        public string fullName { get; set; }
-        public ProjectGetDetails project { get; set; }
-        public DateTime completionDate { get; set; }
-        public double estimatedTime { get; set; }
-        public double actualTime { get; set; }
-    }
-
-    /// <summary>
-    /// Task Details API
-    /// </summary>
-    public class RootObjectTaskGetDetails
-    {
-        public TaskDetails task { get; set; }
-        public string stat { get; set; }
-    }
-
-    /// <summary>
-    /// Event Information
-    /// </summary>
-    public class PDEvent
-    {
-        public int id { get; set; }
-        public string type { get; set; }
-    }
-
-    /// <summary>
-    /// Event Response for API Response
-    /// </summary>
-    public class PDEventsApiResponse
-    {
-        public List<PDEvent> events { get; set; }
-        public string nextUri { get; set; }
-        public string stat { get; set; }
-    }
-
+    #endregion
 
 }

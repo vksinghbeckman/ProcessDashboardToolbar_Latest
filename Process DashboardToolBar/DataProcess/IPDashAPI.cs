@@ -4,12 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Process_DashboardToolBarTaskDetails;
 
 namespace Process_DashboardToolBar
 {
     /// <summary>
-    /// Infterface for All Rest API Calls on the Process Dashboard
+    /// Interface for all REST API calls on the Process Dashboard
     /// </summary>
     [Headers("Accept: application/json")]
     public interface IPDashAPI
@@ -26,46 +25,41 @@ namespace Process_DashboardToolBar
         [Get("/api/v1/projects/{projectId}/")]
         Task<ProjectDetailsApiResponse> GetProjectDetails(string projectId);
 
-        // Get Project Details Information
+        // Get the list of all known projects
         [Get("/api/v1/projects/")]
-        Task<ProejctsRootInfo> GetProjectDeatails();
+        Task<ProjectListApiResponse> GetProjectList();
 
-        // Get Projects Tasks Based on the Project ID
+        // Get the list of tasks in a particular project
         [Get("/api/v1/projects/{projectId}/tasks/")]
+        Task<ProjectTaskListApiResponse> GetProjectTaskList(string projectId);
 
-        //Get Project Task Details
-        Task<ProjectTaskDetails> GetProjectTaskDeatails(string projectId);
-
-        // Change the Project Details
+        // Change the details for a task
         [Put("/api/v1/tasks/{taskId}/")]
-        Task<RootObject> ChangeTaskIdDetails(string taskId, [Body(BodySerializationMethod.UrlEncoded)] Dictionary<string, object> param);
+        Task<TaskDetailsApiResponse> ChangeTaskDetails(string taskId, [Body(BodySerializationMethod.UrlEncoded)] Dictionary<string, object> param);
 
         // Get event notifications
         [Get("/api/v1/events/")]
-        Task<PDEventsApiResponse> GetEvents(int after);
+        Task<DashboardEventsApiResponse> GetEvents(int after);
 
-        //Get the Defect Windows
-        // Get event notifications
+        // Open a Defect Window
         [Get("/control/showDefectDialog")]
-        Task<ProcessDashboardWindow> DisplayDefectWindow();
+        Task<TriggerApiResponse> DisplayDefectWindow();
 
-        //Get the Time Log Windows
+        // Open the Time Log Window
         [Get("/control/showTimeLog")]
-        Task<ProcessDashboardWindow> DisplayTimeLogWindow();
+        Task<TriggerApiResponse> DisplayTimeLogWindow();
 
-        //Get the Defect Log Windows
+        // Open the Defect Log Window
         [Get("/control/showDefectLog")]
-        Task<ProcessDashboardWindow> DisplayDefectLogWindow();
+        Task<TriggerApiResponse> DisplayDefectLogWindow();
 
-        //Get the Trigger Response
+        // Run a Trigger and receive the Response
         [Get("/control/runTrigger")]
-        Task<TriggerResponse> RunTrigger(string uri);
+        Task<TriggerApiResponse> RunTrigger(string uri);
 
-        // Get Task Resource List Based ob the Task ID Tasks Based on the Project ID
+        // Get the list of resources for a particular task
         [Get("/api/v1/tasks/{taskId}/resources/")]
-
-        //Get Task Resource Details Details
-        Task<PDTaskResources> GetTaskResourcesDeatails(string taskId);
+        Task<TaskResourcesApiResponse> GetTaskResourcesList(string taskId);
     }
 
 }

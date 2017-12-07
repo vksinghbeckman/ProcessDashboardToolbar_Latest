@@ -55,7 +55,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="DataProcess\IPDashAPI.cs" />
-    <Compile Include="DataProcess\TaskDetailWrapper.cs" />
     <Compile Include="DataProcess\TimerWrapper.cs" />
     <Compile Include="GUID.cs" />
     <Compile Include="PackageCommandID.cs" />

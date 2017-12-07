@@ -19,7 +19,6 @@ using Microsoft.Win32;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using Refit;
-using Process_DashboardToolBarTaskDetails;
 using System.Threading;
 using System.Drawing;
 using System.Collections;
@@ -112,13 +111,13 @@ namespace Process_DashboardToolBar
             if (_activeProjectList == null)
             {
                 //Create the Project List
-                _activeProjectList = new List<ProjectIdDetails>();
+                _activeProjectList = new List<DashboardProject>();
             }
 
             if (_activeProjectTaskList == null)
             {
                 //Create the Project task List
-                _activeProjectTaskList = new List<ProjectTask>();
+                _activeProjectTaskList = new List<DashboardTask>();
             }
 
             IsProcessDashboardRunning = false;
@@ -127,7 +126,7 @@ namespace Process_DashboardToolBar
             if(_activeTaskResourceList == null)
             {
                 //Create the Project task List
-                _activeTaskResourceList = new List<Resource>();
+                _activeTaskResourceList = new List<DashboardResource>();
                 _activeTaskResourceList.Clear();
             }
 
@@ -665,10 +664,10 @@ namespace Process_DashboardToolBar
             try
             {
                 //Start the Play Command
-                ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
+                DashboardTask projectTaskInfo = _activeProjectTaskList.Find(x => x.FullName == _currentTaskChoice);
              
                 //Update the Parameters
-                var param = new Dictionary<string, object> { { "timing", "true" } , { "activeTaskId", projectTaskInfo.id } };
+                var param = new Dictionary<string, object> { { "timing", "true" } , { "activeTaskId", projectTaskInfo.Id } };
 
                 //Send the Rest API Command to Change the Timer State
                 TimerApiResponse t2 = await _pDashAPI.ChangeTimerState(param);
@@ -698,9 +697,9 @@ namespace Process_DashboardToolBar
             try
             {
                  //Get the Project ID Details
-                ProjectIdDetails projectDetails = _activeProjectList.Find(x => x.name == _currentSelectedProjectName);
+                DashboardProject projectDetails = _activeProjectList.Find(x => x.Name == _currentSelectedProjectName);
 
-                string strProjectIDFormat = string.Format("{0}:root", projectDetails.id);
+                string strProjectIDFormat = string.Format("{0}:root", projectDetails.Id);
 
                 //Create the Parameters
                 var param = new Dictionary<string, object> { { "activeTaskId", strProjectIDFormat } };
@@ -730,10 +729,10 @@ namespace Process_DashboardToolBar
             try
             {
                 //Get the Project Task Information
-                ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
+                DashboardTask projectTaskInfo = _activeProjectTaskList.Find(x => x.FullName == _currentTaskChoice);
 
                   //Create the Parameters
-                var param = new Dictionary<string, object> {{ "activeTaskId", projectTaskInfo.id } };
+                var param = new Dictionary<string, object> {{ "activeTaskId", projectTaskInfo.Id } };
 
                 //Update the Timer API Response
                 TimerApiResponse t2 = await _pDashAPI.ChangeTimerState(param);
@@ -782,7 +781,7 @@ namespace Process_DashboardToolBar
                         _projectComboList.Enabled = true;
 
                         //Update the Defect Button State
-                        UpdateDefectButtonState(timerResponse.Timer.defectsAllowed);
+                        UpdateDefectButtonState(timerResponse.Timer.DefectsAllowed);
                     }
                    
                 }
@@ -850,7 +849,7 @@ namespace Process_DashboardToolBar
                             UpdateUIControls(false);
                         }
                         //Update the Defect Button State
-                        UpdateDefectButtonState(timerResponse.Timer.defectsAllowed);
+                        UpdateDefectButtonState(timerResponse.Timer.DefectsAllowed);
 
                     }
                  
@@ -874,10 +873,10 @@ namespace Process_DashboardToolBar
             try
             {
                 //Get the Project List Information on the Startup
-                ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
+                DashboardTask projectTaskInfo = _activeProjectTaskList.Find(x => x.FullName == _currentTaskChoice);
                
                 //Set the Parameters for the Active Task ID
-                var param = new Dictionary<string, object> { { "activeTaskId", projectTaskInfo.id } };
+                var param = new Dictionary<string, object> { { "activeTaskId", projectTaskInfo.Id } };
 
                 TimerApiResponse t2 = await _pDashAPI.ChangeTimerState(param);
 
@@ -898,10 +897,10 @@ namespace Process_DashboardToolBar
             try
             {
                 //Get the Current Selected Project Task
-                ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
+                DashboardTask projectTaskInfo = _activeProjectTaskList.Find(x => x.FullName == _currentTaskChoice);
 
                  //Add the Active Task ID
-                var param = new Dictionary<string, object> { { "timing", "false" }, { "activeTaskId", projectTaskInfo.id } };
+                var param = new Dictionary<string, object> { { "timing", "false" }, { "activeTaskId", projectTaskInfo.Id } };
 
                 //Change the Timer State
                 TimerApiResponse t3 = await _pDashAPI.ChangeTimerState(param);
@@ -932,17 +931,17 @@ namespace Process_DashboardToolBar
             try
             {
                 //Get the Current Selected Project Task
-                ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == _currentTaskChoice);
+                DashboardTask projectTaskInfo = _activeProjectTaskList.Find(x => x.FullName == _currentTaskChoice);
 
            
                 //Check for NULL Task Completion Date
-                if (projectTaskInfo.completionDate != null)
+                if (projectTaskInfo.CompletionDate != null)
                 {
                     //Add the Active Task ID
                     var param = new Dictionary<string, object> { { "completionDate", null } };
 
                     // Change the Project Task State
-                    RootObject projectTaskDetail = await _pDashAPI.ChangeTaskIdDetails(projectTaskInfo.id,param);
+                    TaskDetailsApiResponse projectTaskDetail = await _pDashAPI.ChangeTaskDetails(projectTaskInfo.Id, param);
 
                     //Set the Command ID to NULL
                     Console.WriteLine("Completion Date Set to NULL");
@@ -956,7 +955,7 @@ namespace Process_DashboardToolBar
                     var param = new Dictionary<string, object> {{ "completionDate", strTime} };
 
                     // Change the Project Task State
-                    RootObject projectTaskDetail = await _pDashAPI.ChangeTaskIdDetails(projectTaskInfo.id,param);
+                    TaskDetailsApiResponse projectTaskDetail = await _pDashAPI.ChangeTaskDetails(projectTaskInfo.Id, param);
 
                     Console.WriteLine("Completion Date Set to Value = {0}",strTime);
                 }
@@ -1006,7 +1005,7 @@ namespace Process_DashboardToolBar
                     UpdatetheCompleteButtonStateOnCompleteTime(timerResponse.Timer.ActiveTask.CompletionDate.ToString());
 
                     //Update the Defect Button State
-                    UpdateDefectButtonState(timerResponse.Timer.defectsAllowed);
+                    UpdateDefectButtonState(timerResponse.Timer.DefectsAllowed);
                 }
 
             }
@@ -1030,7 +1029,7 @@ namespace Process_DashboardToolBar
         {
             try
             {
-                ProejctsRootInfo projectInfo = await _pDashAPI.GetProjectDeatails();
+                ProjectListApiResponse projectInfo = await _pDashAPI.GetProjectList();
 
                 if (projectInfo != null)
                 {
@@ -1043,10 +1042,10 @@ namespace Process_DashboardToolBar
                     _activeProjectList.Clear();
 
                     //Add the Project and Items in a List
-                    foreach (var item in projectInfo.projects)
+                    foreach (var item in projectInfo.Projects)
                     {
                         //Add the Items in the List
-                        _activityComboList.Add(item.name);
+                        _activityComboList.Add(item.Name);
                         _activeProjectList.Add(item);
                     }
                 }
@@ -1104,7 +1103,7 @@ namespace Process_DashboardToolBar
                     GetActiveTaskResourcesList();
 
                     //Update the defect button State
-                    UpdateDefectButtonState(timerResponse.Timer.defectsAllowed);
+                    UpdateDefectButtonState(timerResponse.Timer.DefectsAllowed);
                 }
 
             }
@@ -1127,10 +1126,10 @@ namespace Process_DashboardToolBar
                 try
                 {
                     //Get the Project ID Details
-                    ProjectIdDetails projectDetails = _activeProjectList.Find(x => x.name ==_currentSelectedProjectName);
+                    DashboardProject projectDetails = _activeProjectList.Find(x => x.Name ==_currentSelectedProjectName);
 
                     //Get teh Project Task Info
-                    ProjectTaskDetails projectTaskInfo = await _pDashAPI.GetProjectTaskDeatails(projectDetails.id);
+                    ProjectTaskListApiResponse projectTaskInfo = await _pDashAPI.GetProjectTaskList(projectDetails.Id);
 
                     //Get the Project Task Information
                     if (projectTaskInfo != null)
@@ -1141,14 +1140,14 @@ namespace Process_DashboardToolBar
                         //Clear the Project Task List
                         _activeProjectTaskList.Clear();
 
-                        foreach (var item in projectTaskInfo.projectTasks)
+                        foreach (var item in projectTaskInfo.ProjectTasks)
                         {
-                            _activityTaskList.Add(item.fullName);
+                            _activityTaskList.Add(item.FullName);
                             _activeProjectTaskList.Add(item);
                         }
 
                         //Enable Disable the UI Controls
-                        if(projectTaskInfo.projectTasks.Count == 0)
+                        if(projectTaskInfo.ProjectTasks.Count == 0)
                         {
                             //Update the UI Controls
                             UpdateUIControls(false);
@@ -1235,12 +1234,12 @@ namespace Process_DashboardToolBar
             GetTaskListInformation();
 
             //Find the Task from the List to Get the Id for the Project
-            ProjectTask projectTaskInfo = _activeProjectTaskList.Find(x => x.fullName == currentTask);
+            DashboardTask projectTaskInfo = _activeProjectTaskList.Find(x => x.FullName == currentTask);
 
             //Check if the Project Current Active Task is Not Null
             if(projectTaskInfo !=null)
             {
-                if(projectTaskInfo.completionDate != null)
+                if(projectTaskInfo.CompletionDate != null)
                 {
                     _finishButton.Text = "Completed";                 
                     _finishButton.Enabled = true;
@@ -1370,7 +1369,7 @@ namespace Process_DashboardToolBar
                     }
 
                     //Update the Defect Button State
-                    UpdateDefectButtonState(timerResponse.Timer.defectsAllowed);
+                    UpdateDefectButtonState(timerResponse.Timer.DefectsAllowed);
                 }
 
             }
@@ -1409,7 +1408,7 @@ namespace Process_DashboardToolBar
                     SetCurrentActiveTaskAndUpdateUIOnProjectChange(strCurrentTask);
 
                     //Update the Defect Button State
-                    UpdateDefectButtonState(timerResponse.Timer.defectsAllowed);
+                    UpdateDefectButtonState(timerResponse.Timer.DefectsAllowed);
                 }
 
             }
@@ -1600,9 +1599,9 @@ namespace Process_DashboardToolBar
                 try
                 {
                     //Get the Events Through Rest APIS Services
-                    PDEventsApiResponse resp = await _pDashAPI.GetEvents(_maxEventID);
+                    DashboardEventsApiResponse resp = await _pDashAPI.GetEvents(_maxEventID);
                     errCount = 0;
-                    foreach (var evt in resp.events)
+                    foreach (var evt in resp.Events)
                     {
                         HandleProcessDashboardSyncEvents(evt);
                     }
@@ -1672,11 +1671,11 @@ namespace Process_DashboardToolBar
         /// Function Callback for Handling the Process Dashboard Sync Events
         /// </summary>
         /// <param name="evt"></param>
-        private void HandleProcessDashboardSyncEvents(PDEvent evt)
+        private void HandleProcessDashboardSyncEvents(DashboardEvent evt)
         {
-            _maxEventID = evt.id;
+            _maxEventID = evt.Id;
 
-            switch (evt.type)
+            switch (evt.Type)
             {
                 case "timer":
                     // update the play/pause state   
@@ -1712,7 +1711,7 @@ namespace Process_DashboardToolBar
                     break;
             }
 
-            Console.WriteLine("[HandleProcessDashboardSyncEvents] Data Modified in Process Dashboard = {0}\n", evt.type.ToString());
+            Console.WriteLine("[HandleProcessDashboardSyncEvents] Data Modified in Process Dashboard = {0}\n", evt.Type.ToString());
         }
 
 
@@ -1728,17 +1727,17 @@ namespace Process_DashboardToolBar
             try
             {                
                 //Get the Timer State
-                 ProcessDashboardWindow windowResponse = await _pDashAPI.DisplayDefectWindow();
+                 TriggerApiResponse windowResponse = await _pDashAPI.DisplayDefectWindow();
 
                  //Check the Timer Response
                   if (windowResponse != null)
                    {
-                       if ((IntPtr)windowResponse.window.id != IntPtr.Zero)
+                       if ((IntPtr)windowResponse.Window.Id != IntPtr.Zero)
                         {
-                            SetForegroundWindow((IntPtr)windowResponse.window.id);
-                            SetDefectWindowToCenter((IntPtr)windowResponse.window.id);
+                            SetForegroundWindow((IntPtr)windowResponse.Window.Id);
+                            SetDefectWindowToCenter((IntPtr)windowResponse.Window.Id);
 
-                            _defaultDefectWindowTitle = windowResponse.window.title;
+                            _defaultDefectWindowTitle = windowResponse.Window.Title;
                         }
                     } 
             }
@@ -1757,17 +1756,17 @@ namespace Process_DashboardToolBar
             try
             {
                 //Get the Timer State
-                ProcessDashboardWindow windowResponse = await _pDashAPI.DisplayTimeLogWindow();
+                TriggerApiResponse windowResponse = await _pDashAPI.DisplayTimeLogWindow();
 
                 //Check the Timer Response
                 if (windowResponse != null)
                 {
-                    if ((IntPtr)windowResponse.window.id != IntPtr.Zero)
+                    if ((IntPtr)windowResponse.Window.Id != IntPtr.Zero)
                     {
-                        SetForegroundWindow((IntPtr)windowResponse.window.id);
-                        SetDefectWindowToCenter((IntPtr)windowResponse.window.id);
+                        SetForegroundWindow((IntPtr)windowResponse.Window.Id);
+                        SetDefectWindowToCenter((IntPtr)windowResponse.Window.Id);
 
-                        _defaultDefectWindowTitle = windowResponse.window.title;
+                        _defaultDefectWindowTitle = windowResponse.Window.Title;
                     }
                 }
             }
@@ -1786,17 +1785,17 @@ namespace Process_DashboardToolBar
             try
             {
                 //Get the Timer State
-                ProcessDashboardWindow windowResponse = await _pDashAPI.DisplayDefectLogWindow();
+                TriggerApiResponse windowResponse = await _pDashAPI.DisplayDefectLogWindow();
 
                 //Check the Timer Response
                 if (windowResponse != null)
                 {
-                    if ((IntPtr)windowResponse.window.id != IntPtr.Zero)
+                    if ((IntPtr)windowResponse.Window.Id != IntPtr.Zero)
                     {
-                        SetForegroundWindow((IntPtr)windowResponse.window.id);
-                        SetDefectWindowToCenter((IntPtr)windowResponse.window.id);
+                        SetForegroundWindow((IntPtr)windowResponse.Window.Id);
+                        SetDefectWindowToCenter((IntPtr)windowResponse.Window.Id);
 
-                        _defaultDefectWindowTitle = windowResponse.window.title;
+                        _defaultDefectWindowTitle = windowResponse.Window.Title;
                     }
                 }
             }
@@ -1876,7 +1875,7 @@ namespace Process_DashboardToolBar
                 //Check the Timer Response
                 if (timerResponse != null && timerResponse.Timer.ActiveTask != null)
                 {
-                    PDTaskResources taskResourceInfo = await _pDashAPI.GetTaskResourcesDeatails(timerResponse.Timer.ActiveTask.Id);
+                    TaskResourcesApiResponse taskResourceInfo = await _pDashAPI.GetTaskResourcesList(timerResponse.Timer.ActiveTask.Id);
 
                     if (taskResourceInfo != null)
                     {
@@ -1884,7 +1883,7 @@ namespace Process_DashboardToolBar
                         _activeTaskResourceList.Clear();
 
                         //Add the Project and Items in a List
-                        foreach (var item in taskResourceInfo.resources)
+                        foreach (var item in taskResourceInfo.Resources)
                         {
                             //Add the Items in the List
                             _activeTaskResourceList.Add(item);
@@ -1895,7 +1894,7 @@ namespace Process_DashboardToolBar
                     ProcessTasKResourceMenuItems();
 
                     //Update the Defect button State
-                    UpdateDefectButtonState(timerResponse.Timer.defectsAllowed);
+                    UpdateDefectButtonState(timerResponse.Timer.DefectsAllowed);
 
                 }
 
@@ -1915,34 +1914,34 @@ namespace Process_DashboardToolBar
         /// Handle the Trigger Reponse 
         /// </summary>
         /// <param name="response">Trigger Response Object</param>
-        private void HandleTriggerResponse(TriggerResponse response)
+        private void HandleTriggerResponse(TriggerApiResponse response)
         {
             try
             {
-                if (response.window != null)
+                if (response.Window != null)
                 {
                     // write code here to bring a window to the front,
                     // using the values in response.window.id,
                     // response.window.pid, or response.window.title
 
-                    if ((IntPtr)response.window.id != IntPtr.Zero)
+                    if ((IntPtr)response.Window.Id != IntPtr.Zero)
                     {
-                        SetForegroundWindow((IntPtr)response.window.id);
+                        SetForegroundWindow((IntPtr)response.Window.Id);
                     }
 
                 }
-                else if (response.message != null)
+                else if (response.Message != null)
                 {
                     // write code here to display a message to the user,
                     // using the values in response.message.title and
                     // response.message.body
-                    System.Windows.Forms.MessageBox.Show(response.message.body, response.message.title, MessageBoxButtons.OK);
+                    System.Windows.Forms.MessageBox.Show(response.Message.Body, response.Message.Title, MessageBoxButtons.OK);
                 }
-                else if (response.redirect != null)
+                else if (response.Redirect != null)
                 {
                     // write code here to open the redirect URI
                     // in a web browser tab
-                    ProcessReportOnTaskResourceChange(_currentTaskResourceID.uri);
+                    DisplayReportInWebBrowser(response.Redirect);
                 }
             }
             catch(Exception ex)
@@ -2131,7 +2130,7 @@ namespace Process_DashboardToolBar
                     if (MRUItemIndex >= 0 && MRUItemIndex < _activeTaskResourceList.Count)
                     {
                         //Display the Text for the Menu Command
-                        menuCommand.Text = _activeTaskResourceList[MRUItemIndex].name;
+                        menuCommand.Text = _activeTaskResourceList[MRUItemIndex].Name;
                         menuCommand.Visible = true;
                     }
                 }
@@ -2158,16 +2157,16 @@ namespace Process_DashboardToolBar
                     int MRUItemIndex = menuCommand.CommandID.ID - baseMRUID;
                     if (MRUItemIndex >= 0 && MRUItemIndex < _activeTaskResourceList.Count)
                     {
-                        _currentTaskResourceID = _activeTaskResourceList[MRUItemIndex];
+                        DashboardResource resource = _activeTaskResourceList[MRUItemIndex];
 
                         //Check if there is a Trigger than Run the Trigger and Get the Response.
-                        if (_currentTaskResourceID.trigger == true)
+                        if (resource.Trigger == true)
                         {
-                            ProcessReportOnRequestedTaskResourceURI();
+                            RunTriggerResource(resource);
                         }
                         else
                         {
-                            ProcessReportOnTaskResourceChange(_currentTaskResourceID.uri);
+                            DisplayReportInWebBrowser(resource.Uri);
                         }
                     }
                 }
@@ -2183,7 +2182,7 @@ namespace Process_DashboardToolBar
         /// Process the Task Report on Task Resource Change 
         /// </summary>
         /// <param name="reportURL">Report URL</param>
-        private void ProcessReportOnTaskResourceChange(string reportURL)
+        private void DisplayReportInWebBrowser(string reportURL)
         {
             try
             {
@@ -2222,14 +2221,14 @@ namespace Process_DashboardToolBar
         /// <summary>
         /// Get the Report Based on the Selected Task Resource URI
         /// </summary>
-        private async void ProcessReportOnRequestedTaskResourceURI()
+        private async void RunTriggerResource(DashboardResource triggerResource)
         {
             try
             {
                 //Check if the Resource ID is NULL and the Task resource ID 
-               if (_currentTaskResourceID != null && _currentTaskResourceID.uri.Length > 0)
+               if (triggerResource != null && triggerResource.Uri.Length > 0)
                 {
-                    TriggerResponse resTriggerResponse = await _pDashAPI.RunTrigger(_currentTaskResourceID.uri);
+                    TriggerApiResponse resTriggerResponse = await _pDashAPI.RunTrigger(triggerResource.Uri);
 
                     if (resTriggerResponse != null)
                     {
@@ -2388,17 +2387,17 @@ namespace Process_DashboardToolBar
         /// <summary>
         /// Active Project Task List
         /// </summary>
-        private List<ProjectIdDetails> _activeProjectList;
+        private List<DashboardProject> _activeProjectList;
 
         /// <summary>
         /// Active Project Task List [Project Task Inside the Process]
         /// </summary>
-        private List<ProjectTask> _activeProjectTaskList;
+        private List<DashboardTask> _activeProjectTaskList;
 
         /// <summary>
         /// Active Project Task Resource List
         /// </summary>
-        private List<Resource> _activeTaskResourceList;
+        private List<DashboardResource> _activeTaskResourceList;
 
         /// <summary>
         /// Old Task Resource List for the Menu Item
@@ -2431,12 +2430,7 @@ namespace Process_DashboardToolBar
         private string _currentTaskChoice;
 
         //Current Active Task Information
-        private Task _currentActiveTaskInfo;
-
-        /// <summary>
-        /// Summart Current Task Resource ID
-        /// </summary>
-        private Resource _currentTaskResourceID;
+        private DashboardTask _currentActiveTaskInfo;
 
 
         /// <summary>
