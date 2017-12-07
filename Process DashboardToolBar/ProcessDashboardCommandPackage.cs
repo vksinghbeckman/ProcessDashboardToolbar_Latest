@@ -62,6 +62,8 @@ namespace Process_DashboardToolBar
         [DllImport("user32.dll")]
         public static extern bool SetForegroundWindow(IntPtr hWnd);
 
+        [DllImport("user32.dll")]
+        public static extern bool AllowSetForegroundWindow(int dwProcessId);
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -1725,21 +1727,11 @@ namespace Process_DashboardToolBar
         private async void DisplayDefectDialog()
         {
             try
-            {                
-                //Get the Timer State
-                 TriggerApiResponse windowResponse = await _pDashAPI.DisplayDefectWindow();
-
-                 //Check the Timer Response
-                  if (windowResponse != null)
-                   {
-                       if ((IntPtr)windowResponse.Window.Id != IntPtr.Zero)
-                        {
-                            SetForegroundWindow((IntPtr)windowResponse.Window.Id);
-                            SetDefectWindowToCenter((IntPtr)windowResponse.Window.Id);
-
-                            _defaultDefectWindowTitle = windowResponse.Window.Title;
-                        }
-                    } 
+            {
+                // Open defect dialog
+                TriggerApiResponse windowResponse = await _pDashAPI.DisplayDefectWindow();
+                HandleTriggerResponse(windowResponse);
+                    
             }
             catch (Exception ex)
             {
@@ -1755,20 +1747,9 @@ namespace Process_DashboardToolBar
         {
             try
             {
-                //Get the Timer State
+                // Open the Time Log
                 TriggerApiResponse windowResponse = await _pDashAPI.DisplayTimeLogWindow();
-
-                //Check the Timer Response
-                if (windowResponse != null)
-                {
-                    if ((IntPtr)windowResponse.Window.Id != IntPtr.Zero)
-                    {
-                        SetForegroundWindow((IntPtr)windowResponse.Window.Id);
-                        SetDefectWindowToCenter((IntPtr)windowResponse.Window.Id);
-
-                        _defaultDefectWindowTitle = windowResponse.Window.Title;
-                    }
-                }
+                HandleTriggerResponse(windowResponse);
             }
             catch (Exception ex)
             {
@@ -1784,19 +1765,43 @@ namespace Process_DashboardToolBar
         {
             try
             {
-                //Get the Timer State
+                // Open the Defect Log
                 TriggerApiResponse windowResponse = await _pDashAPI.DisplayDefectLogWindow();
+                HandleTriggerResponse(windowResponse);
+            }
+            catch (Exception ex)
+            {
+                //Handle the Exception
+                Console.WriteLine(ex.ToString());
+            }
+        }
 
-                //Check the Timer Response
-                if (windowResponse != null)
+        /// <summary>
+        /// Bring a window to the front, and center it
+        /// </summary>
+        private void RaiseAndCenterWindow(TriggerWindow window)
+        {
+            try
+            {
+                // get the window handle from the trigger response object
+                IntPtr handle = (IntPtr)window.Id;
+
+                // if the window handle was missing, try to look it up from the window title
+                if (handle == IntPtr.Zero && window.Title != null && window.Title != "")
                 {
-                    if ((IntPtr)windowResponse.Window.Id != IntPtr.Zero)
-                    {
-                        SetForegroundWindow((IntPtr)windowResponse.Window.Id);
-                        SetDefectWindowToCenter((IntPtr)windowResponse.Window.Id);
+                    handle = FindWindow(null, window.Title);
+                }
 
-                        _defaultDefectWindowTitle = windowResponse.Window.Title;
-                    }
+                if (handle != IntPtr.Zero)
+                {
+                    // if we have a window handle, make the call to bring the window to the foreground
+                    SetForegroundWindow(handle);
+                    CenterWindowOnScreen(handle);
+                }
+                else if (window.Pid != 0)
+                {
+                    // if we were given a process handle, grant that process permission to open a foreground window
+                    AllowSetForegroundWindow(window.Pid);
                 }
             }
             catch (Exception ex)
@@ -1805,11 +1810,12 @@ namespace Process_DashboardToolBar
                 Console.WriteLine(ex.ToString());
             }
         }
+
         /// <summary>
         /// Set the Default Window to Center
         /// </summary>
         /// <param name="handle">Window Handle for the Defect Window</param>
-        private void SetDefectWindowToCenter(IntPtr handle)
+        private void CenterWindowOnScreen(IntPtr handle)
         {
             try
             {
@@ -1831,32 +1837,7 @@ namespace Process_DashboardToolBar
            
         }
 
-        /// <summary>
-        /// Default Window Name 
-        /// </summary>
-        /// <returns></returns>
-        private bool IsDefaultWindowAlreadyOpen()
-        {
-            bool bState = false;
 
-            try
-            {
-                IntPtr wndHandle = FindWindow(null, _defaultDefectWindowTitle);
-
-                if (wndHandle != IntPtr.Zero)
-                {
-                    bState = true;
-                }
-            }
-            catch(Exception ex)
-            {
-                //Handle the Exception
-                Console.WriteLine(ex.ToString());
-            }
-                  
-
-            return bState;
-        }
         #endregion
 
         #region Report Section
@@ -1918,29 +1899,23 @@ namespace Process_DashboardToolBar
         {
             try
             {
-                if (response.Window != null)
+                if (response == null)
                 {
-                    // write code here to bring a window to the front,
-                    // using the values in response.window.id,
-                    // response.window.pid, or response.window.title
-
-                    if ((IntPtr)response.Window.Id != IntPtr.Zero)
-                    {
-                        SetForegroundWindow((IntPtr)response.Window.Id);
-                    }
-
+                    // no response? do nothing
+                }
+                else if (response.Window != null)
+                {
+                    // bring window to the front, and center it
+                    RaiseAndCenterWindow(response.Window);
                 }
                 else if (response.Message != null)
                 {
-                    // write code here to display a message to the user,
-                    // using the values in response.message.title and
-                    // response.message.body
+                    // display a message to the user
                     System.Windows.Forms.MessageBox.Show(response.Message.Body, response.Message.Title, MessageBoxButtons.OK);
                 }
                 else if (response.Redirect != null)
                 {
-                    // write code here to open the redirect URI
-                    // in a web browser tab
+                    // open the redirect URI in a web browser tab
                     DisplayReportInWebBrowser(response.Redirect);
                 }
             }
@@ -2480,17 +2455,6 @@ namespace Process_DashboardToolBar
         ///  Variable to Get and Set If Reset Event Need to be Handled or Not
         /// </summary>
         private bool _handlingRestEvent = false;
-
-        /// <summary>
-        /// DefaultWindowName
-        /// </summary>
-        private string _defaultDefectWindowTitle = "Defect Dialog";
-
-        /// <summary>
-        /// Default Window ID for the Defect Window
-        /// </summary>
-        /// 
-        private IntPtr _defaultDefectWindowId = IntPtr.Zero;
 
         /// <summary>
         /// Command MRU List Data

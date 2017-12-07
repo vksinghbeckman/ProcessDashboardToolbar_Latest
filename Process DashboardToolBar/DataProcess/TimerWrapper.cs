@@ -99,6 +99,7 @@ namespace Process_DashboardToolBar
     public class TriggerWindow
     {
         public int Id { get; set; }
+        public int Pid { get; set; }
         public string Title { get; set; }
     }
     public class TriggerMessage
