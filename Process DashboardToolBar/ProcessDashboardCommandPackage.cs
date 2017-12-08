@@ -243,6 +243,12 @@ namespace Process_DashboardToolBar
                                    _finishButton = menuItem;       
                                 }
                                 break;
+                            case PkgCmdIDList.cmdidFindTask:
+                                {
+                                    //find task button
+                                    _findTaskButton = menuItem;
+                                }
+                                break;
                             case PkgCmdIDList.cmdidDefect:
                                 {
                                     //defect button
@@ -313,6 +319,12 @@ namespace Process_DashboardToolBar
                         {
                             //Finish Command
                             ProcessTimerFinishCommand();
+                        }
+                        break;
+                    case PkgCmdIDList.cmdidFindTask:
+                        {
+                            //Open the Find Task Dialog
+                            DisplayFindTaskDialog();
                         }
                         break;
                     case PkgCmdIDList.cmdidDefect:
@@ -692,6 +704,9 @@ namespace Process_DashboardToolBar
 
         private void SyncControlButtonState(TimerData timerData)
         {
+            // Enable the find task button
+            _findTaskButton.Enabled = true;
+
             // Update appearance of the Pause button
             _pauseButton.Enabled = timerData.TimingAllowed;
             _pauseButton.Checked = timerData.TimingAllowed && !timerData.Timing;
@@ -881,7 +896,8 @@ namespace Process_DashboardToolBar
             _taskNameToDisplay = " ";
             refreshCombo(_taskComboBox);
 
-            // disable the play/pause, defect, and finish buttons
+            // disable the find, play/pause, defect, and finish buttons
+            _findTaskButton.Enabled = false;
             _pauseButton.Enabled = false;
             _pauseButton.Checked = false;
             _playButton.Enabled = false;
@@ -986,10 +1002,29 @@ namespace Process_DashboardToolBar
 
             Console.WriteLine("[HandleProcessDashboardSyncEvents] Data Modified in Process Dashboard = {0}\n", evt.Type.ToString());
         }
-        
+
         #endregion
 
         #region Logic to open various Windows
+
+        /// <summary>
+        /// Display the Find Task Dialog
+        /// </summary>
+        private async void DisplayFindTaskDialog()
+        {
+            try
+            {
+                // Open find task dialog
+                TriggerApiResponse windowResponse = await _pDashAPI.DisplayFindTaskWindow();
+                HandleTriggerResponse(windowResponse);
+
+            }
+            catch (Exception ex)
+            {
+                //Handle the Exception
+                Console.WriteLine(ex.ToString());
+            }
+        }
 
         /// <summary>
         /// Display the Defect Dialog
@@ -1407,6 +1442,11 @@ namespace Process_DashboardToolBar
         /// Finish Button Menu Command
         /// </summary>
         private OleMenuCommand _finishButton;
+
+        /// <summary>
+        /// Find Task Button Menu Command
+        /// </summary>
+        private OleMenuCommand _findTaskButton;
 
         /// <summary>
         /// Defect Button Menu Command

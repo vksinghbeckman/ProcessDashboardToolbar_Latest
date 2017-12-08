@@ -52,6 +52,10 @@ namespace Process_DashboardToolBar
         // Open the Defect Log Window
         [Get("/control/showDefectLog")]
         Task<TriggerApiResponse> DisplayDefectLogWindow();
+ 
+        // Open the Find Task Window
+        [Get("/control/showFindTaskWindow")]
+        Task<TriggerApiResponse> DisplayFindTaskWindow();
 
         // Run a Trigger and receive the Response
         [Get("/control/runTrigger")]

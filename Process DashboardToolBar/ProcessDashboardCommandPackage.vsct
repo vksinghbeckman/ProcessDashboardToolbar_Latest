@@ -41,8 +41,8 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
          <Strings>
-          <ButtonText>Process DashboardToolbar</ButtonText>
-          <CommandName>Process DashboardToolbar</CommandName>
+          <ButtonText>Process Dashboard</ButtonText>
+          <CommandName>Process Dashboard</CommandName>
         </Strings>
       </Menu>
 
@@ -95,6 +95,15 @@
               <CommandFlag>DynamicVisibility</CommandFlag>
           If you do not want an image next to your command, remove the Icon node /> -->
 
+      <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidFind" priority="0x35" type="Button">
+        <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
+        <Icon guid="guidFindImage" id="bmpFindImage" />
+        <Strings>
+          <ToolTipText>Find Task...</ToolTipText>
+          <ButtonText>Find</ButtonText>
+        </Strings>
+      </Button>
+
       <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidPause" priority="0x40" type="Button">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
         <Icon guid="guidPauseImage" id="bmpPauseImage" />       
@@ -112,22 +121,22 @@
           <ButtonText>Play</ButtonText>          
         </Strings>
       </Button>
-     
+
+      <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidDefect" priority="0x60" type="Button">
+        <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
+        <Icon guid="guidDefectImage" id="bmpDefectImage" />
+        <Strings>
+          <ToolTipText>Log a New Defect for the Selected Task</ToolTipText>
+          <ButtonText>Defect</ButtonText>
+        </Strings>
+      </Button>
+
       <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidFinish" priority="0x100" type="Button">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
-          <ToolTipText>Finish the Task for the Selected Task</ToolTipText>
+          <ToolTipText>Mark the Selected Task Complete/Incomplete</ToolTipText>
           <ButtonText>Finish</ButtonText>
-        </Strings>
-      </Button>   
-      
-        <Button guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidDefect" priority="0x60" type="Button">
-        <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
-        <Icon guid="guidDefectImage" id="bmpDefectImage" />      
-        <Strings>
-          <ToolTipText>Defect to be Logged</ToolTipText>
-          <ButtonText>Defect</ButtonText>          
         </Strings>
       </Button>
       
@@ -205,6 +214,7 @@
       <Bitmap guid="guidStartImage" href="Resources\play.ico" usedList="bmpStartImage" />      
       <Bitmap guid="guidPauseImage" href="Resources\pause.ico" usedList="bmpPauseImage" />
       <Bitmap guid="guidDefectImage" href="Resources\defect.ico" usedList="bmpDefectImage" />
+      <Bitmap guid="guidFindImage" href="Resources\find.ico" usedList="bmpFindImage" />
     
     </Bitmaps>
   </Commands>
@@ -226,6 +236,7 @@
       <IDSymbol name="cmdProjectDetails" value="0x106" />
       <IDSymbol name="cmdidProjectList" value="0x107" />    
       <IDSymbol name="cmdidDefect" value="0x108" />
+      <IDSymbol name="cmdidFind" value="0x112" />
       
       <IDSymbol name="cmdidMRUList" value="0x0200"/>
       <IDSymbol name="cmdidTimeLog" value="0x0400"/>
@@ -265,7 +276,11 @@
       <IDSymbol name="bmpPicArrows" value="5" />
       <IDSymbol name="bmpPicStrikethrough" value="6" />
     </GuidSymbol>
-  
+
+    <GuidSymbol name="guidFindImage" value="{F6423BF5-EB5A-4E89-B92E-1C75AAC9102B}">
+      <IDSymbol name="bmpFindImage" value="1" />
+    </GuidSymbol>
+
     <GuidSymbol name="guidStartImage" value="{727C1A28-B6AE-462D-8510-44C7B3735147}">
       <IDSymbol name="bmpStartImage" value="1" />          
     </GuidSymbol>

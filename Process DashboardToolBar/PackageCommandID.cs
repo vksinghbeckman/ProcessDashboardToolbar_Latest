@@ -47,6 +47,9 @@ namespace Process_DashboardToolBar
         //report list
         cmdidReportList = 0x111,
 
+        //Find Task Command
+        cmdidFindTask = 0x112,
+
         //Time Log Button
         cmdidTimeLog = 0x400,
 
