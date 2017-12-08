@@ -1345,7 +1345,7 @@ namespace Process_DashboardToolBar
                 {
                     RECT rct;
                     GetWindowRect(handle, out rct);
-                    Rectangle screen = Screen.FromHandle(handle).Bounds;
+                    Rectangle screen = GetTargetScreenForDialog(handle).Bounds;
                     Point pt = new Point(screen.Left + screen.Width / 2 - (rct.Right - rct.Left) / 2, screen.Top + screen.Height / 2 - (rct.Bottom - rct.Top) / 2);
                     SetWindowPos(handle, IntPtr.Zero, pt.X, pt.Y, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_SHOWWINDOW);
                 }
@@ -1357,6 +1357,35 @@ namespace Process_DashboardToolBar
                 Console.WriteLine(ex.ToString());
             }
 
+        }
+
+        /// <summary>
+        /// Gets a rectangle for the screen where a dialog should be centered. 
+        /// In a multi-screen environment, this attempts to locate the screen containing the VS IDE main window. 
+        /// If that fails, it will return the screen containing the window given by the handle parameter.
+        /// </summary>
+        private Screen GetTargetScreenForDialog(IntPtr handle)
+        {
+            try
+            {
+                var vsUIShell = GetService(typeof(IVsUIShell)) as IVsUIShell;
+                if (vsUIShell != null)
+                {
+                    IntPtr mainWindowHandle;
+                    int result = vsUIShell.GetDialogOwnerHwnd(out mainWindowHandle);
+                    if (result == 0)
+                    {
+                        handle = mainWindowHandle;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                //Handle the Exception
+                Console.WriteLine(ex.ToString());
+            }
+
+            return Screen.FromHandle(handle);
         }
 
         #endregion
