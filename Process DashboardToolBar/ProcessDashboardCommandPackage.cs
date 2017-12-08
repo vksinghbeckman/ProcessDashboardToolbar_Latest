@@ -104,22 +104,10 @@ namespace Process_DashboardToolBar
                 _projectList = new List<DashboardProject>();
             }
 
-            if (_projectNameList == null)
-            {
-                //Create the List for the Project
-                _projectNameList = new List<string>();
-            }
-
             if (_activeProjectTaskList == null)
             {
                 //Create the Project task List
                 _activeProjectTaskList = new List<DashboardTask>();
-            }
-
-            if (_activeProjectTaskNameList == null)
-            {
-                //Create the Task List
-                _activeProjectTaskNameList = new List<string>();
             }
 
             //Clear the Task Resource List
@@ -396,7 +384,7 @@ namespace Process_DashboardToolBar
             else if (input != null)
             {
                 // when input is non-NULL, the IDE is asking us to change the value for the combo
-                var newChoice = input.ToString();
+                var newChoice = RemoveActiveItemFlag(input.ToString());
                 if (!string.IsNullOrEmpty(newChoice))
                 {
                     UserSelectedNewProject(newChoice);
@@ -429,7 +417,9 @@ namespace Process_DashboardToolBar
                 }
                 else if (vOut != IntPtr.Zero)
                 {
-                    Marshal.GetNativeVariantForObject(_projectNameList.ToArray(), vOut);
+                    // build and return a list of the project names, flagging the active project
+                    string[] projectNames = BuildItemNameList(_projectList, IsActiveProject, p => p.Name);
+                    Marshal.GetNativeVariantForObject(projectNames, vOut);
 
                     // When the dashboard is not running, the project combo displays the message
                     // "NO CONNECTION". If the user clicks on the combo box at that time, this
@@ -480,7 +470,7 @@ namespace Process_DashboardToolBar
             else if (input != null)
             {
                 // when input is non-NULL, the IDE is asking us to change the value for the combo
-                var newChoice = input.ToString();
+                var newChoice = RemoveActiveItemFlag(input.ToString());
                 if (!string.IsNullOrEmpty(newChoice))
                 {
                     UserSelectedNewTask(newChoice);
@@ -513,12 +503,37 @@ namespace Process_DashboardToolBar
                 }
                 else if (vOut != IntPtr.Zero)
                 {
-                    Marshal.GetNativeVariantForObject(_activeProjectTaskNameList.ToArray(), vOut);
+                    // build and return a list of the task names, flagging the active task
+                    string[] taskNames = BuildItemNameList(_activeProjectTaskList, IsActiveTask, t => t.FullName);
+                    Marshal.GetNativeVariantForObject(taskNames, vOut);
                 }
                 else
                 {
                     return;
                 }
+            }
+        }
+
+        private string[] BuildItemNameList<T>(List<T> items, Func<T, bool> isItemActive, Func<T,string> getItemName)
+        {
+            string[] result = new string[items.Count];
+            for (int i = 0; i < result.Length; i++)
+            {
+                T item = items[i];
+                result[i] = (isItemActive(item) ? _activeItemFlag : "") + getItemName(item);
+            }
+            return result;
+        }
+
+        private string RemoveActiveItemFlag(string name)
+        {
+            if (name != null && name.StartsWith(_activeItemFlag))
+            {
+                return name.Substring(_activeItemFlag.Length);
+            }
+            else
+            {
+                return name;
             }
         }
 
@@ -683,7 +698,6 @@ namespace Process_DashboardToolBar
                 // clear the list of items in the task combo box, since this project
                 // doesn't contain any tasks
                 _activeProjectTaskList.Clear();
-                _activeProjectTaskNameList.Clear();
 
                 // save the new active project
                 _activeProject = newActiveTask.Project;
@@ -698,12 +712,10 @@ namespace Process_DashboardToolBar
                 {
                     // Discard the list of tasks from the old project.
                     _activeProjectTaskList.Clear();
-                    _activeProjectTaskNameList.Clear();
 
                     // the lines below will reload the list of tasks asynchronously. In the meantime,
                     // install a single placeholder task so the combo box will remain enabled
                     _activeProjectTaskList.Add(newActiveTask);
-                    _activeProjectTaskNameList.Add(newActiveTask.FullName);
 
                     // asynchronously load the list of tasks in the new project.
                     _activeProject = newActiveTask.Project;
@@ -901,15 +913,9 @@ namespace Process_DashboardToolBar
                 {
                     //Clear the old projects from the List
                     _projectList.Clear();
-                    _projectNameList.Clear();
 
-                    //Add the Project and Items in a List
-                    foreach (var item in projectInfo.Projects)
-                    {
-                        //Add the Items in the List
-                        _projectList.Add(item);
-                        _projectNameList.Add(item.Name);
-                    }
+                    //Add the new projects to the list
+                    _projectList.AddRange(projectInfo.Projects);
                 }
             }
             catch (Exception ex)
@@ -934,14 +940,12 @@ namespace Process_DashboardToolBar
                 {
                     // Discard any previous task list data
                     _activeProjectTaskList.Clear();
-                    _activeProjectTaskNameList.Clear();
 
                     // add the new tasks to the list
                     foreach (var item in projectTaskInfo.ProjectTasks)
                     {
                         item.Project = projectTaskInfo.ForProject;
                         _activeProjectTaskList.Add(item);
-                        _activeProjectTaskNameList.Add(item.FullName);
                     }
                 }
             }
@@ -977,14 +981,12 @@ namespace Process_DashboardToolBar
         {
             // empty the project list, and display the given message
             _projectList.Clear();
-            _projectNameList.Clear();
             _projectNameToDisplay = messageToDisplay;
             refreshCombo(_projectComboBox);
 
             // empty the task list and display nothing. The task combo box must remain enabled momentarily
             // so Visual Studio will query the new text to display.
             _activeProjectTaskList.Clear();
-            _activeProjectTaskNameList.Clear();
             _taskNameToDisplay = " ";
             refreshCombo(_taskComboBox);
 
@@ -1581,19 +1583,9 @@ namespace Process_DashboardToolBar
         private List<DashboardProject> _projectList;
 
         /// <summary>
-        /// List of the names of known projects
-        /// </summary>
-        private List<string> _projectNameList;
-
-        /// <summary>
         /// List of the tasks within the Active Project
         /// </summary>
         private List<DashboardTask> _activeProjectTaskList;
-
-        /// <summary>
-        /// List of the names of tasks within the currently selected project
-        /// </summary>
-        private List<string> _activeProjectTaskNameList;
 
         /// <summary>
         /// Active Project Task Resource List
@@ -1673,6 +1665,11 @@ namespace Process_DashboardToolBar
         #endregion
 
         #region Messages for display to the user
+
+        /// <summary>
+        /// Flag indicating that a project/task is active
+        /// </summary>
+        private const string _activeItemFlag = "\u25B6 ";
 
         /// <summary>
         /// No Task Present Messsage
