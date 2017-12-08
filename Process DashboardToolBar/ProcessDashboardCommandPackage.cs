@@ -888,6 +888,13 @@ namespace Process_DashboardToolBar
             }
             else if (showDialogOnError)
             {
+                // if we were able to contact the dashboard, but the user is running an older version, show a message describing the problem
+                if (ProcessDashboardSoftwareNeedsUpgrade())
+                {
+                    MessageBox.Show(_displayPDNeedsUpgrade, _displayPDNeedsUpgradeTitle, MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                    return;
+                }
+
                 // if we were unable to contact the dashboard, possibly show a dialog advising the user about the problem
                 DialogResult result = MessageBox.Show(_displayPDConnectionFailed, _displayPDConnectFailedTitle, MessageBoxButtons.OKCancel, MessageBoxIcon.None);
 
@@ -897,6 +904,20 @@ namespace Process_DashboardToolBar
                     AttemptToConnectToDashboard(true);
                 }
             }
+        }
+
+        /// <summary>
+        /// This method examines the last exception that was thrown by a REST API call, and returns true if the
+        /// exception occurred because the user is running an old version of the dashboard software. (The older
+        /// version will not include the REST API, so it will return an HTTP 404 "Not Found" message.)
+        /// </summary>
+        /// <returns></returns>
+        private bool ProcessDashboardSoftwareNeedsUpgrade()
+        {
+            return _lastApiException != null
+                && _lastApiException.GetType().IsAssignableFrom(typeof(Refit.ApiException))
+                && _lastApiException.Message != null
+                && _lastApiException.Message.Contains("404");
         }
         
         /// <summary>
@@ -963,6 +984,7 @@ namespace Process_DashboardToolBar
         {
             if (ex != null)
             {
+                _lastApiException = ex;
                 Console.WriteLine(ex.ToString());
             }
 
@@ -1622,10 +1644,15 @@ namespace Process_DashboardToolBar
         /// </summary>
         private bool _processDashboardRunStatus;
 
-         /// <summary>
+        /// <summary>
         /// Dash API object To Get Information from System
         /// </summary>
         IPDashAPI _pDashAPI = null;
+
+        /// <summary>
+        /// The most recent exception that was thrown by a REST API call
+        /// </summary>
+        private Exception _lastApiException = null;
 
         /// <summary>
         /// The font that is used to draw task names in our combo boxes
@@ -1692,6 +1719,16 @@ namespace Process_DashboardToolBar
         /// Message to be Displayed asking the user to start the dashboard
         /// </summary>
         private const string _displayPDStartRequired = "Visual Studio is not currently connected to the Process Dashboard.\n \nPlease start your personal Process Dashboard if it is not aleady running. Than click OK to connect Visual Studio to the dashboard.\n \nIf you do not wish to connect Visual Studio to the dashboard, click Cancel.";
+
+        /// <summary>
+        /// Upgrade needed Message Title
+        /// </summary>
+        private const string _displayPDNeedsUpgradeTitle = "Process Dashboard Upgrade Needed";
+
+        /// <summary>
+        /// Message advising the user that they need to upgrade the Process Dashboard software
+        /// </summary>
+        private const string _displayPDNeedsUpgrade = "The Visual Studio toolbar relies on functionality that was added in Process Dashboard version 2.4.1. Unfortunately, you are running an older version of the dashboard.\n \nIf you would like to use the Process Dashboard toolbar for Visual Studio, you will need to upgrade the Process Dashboard software first.";
 
         /// <summary>
         /// Failed Connection Messsage Title
