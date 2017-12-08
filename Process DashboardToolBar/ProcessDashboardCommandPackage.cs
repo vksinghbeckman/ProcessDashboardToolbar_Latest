@@ -19,10 +19,8 @@ using Microsoft.Win32;
 using System.Windows.Forms;
 using System.Collections.Generic;
 using Refit;
-using System.Threading;
 using System.Drawing;
 using System.Collections;
-using System.Threading.Tasks;
 
 namespace Process_DashboardToolBar
 {
@@ -88,6 +86,8 @@ namespace Process_DashboardToolBar
         // For Windows Mobile, replace user32.dll with coredll.dll
         [DllImport("user32.dll", SetLastError = true)]
         static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ProcessDashboardCommand"/> class.
         /// </summary>
@@ -98,22 +98,16 @@ namespace Process_DashboardToolBar
             // not sited yet inside Visual Studio environment. The place to do all the other
             // initialization is the Initialize method.
 
-            if (_activityComboList == null)
-            {
-                //Create the List for the Project
-                _activityComboList = new List<string>();
-            }
-
-            if (_activityTaskList == null)
-            {
-                //Create the Task List
-                _activityTaskList = new List<string>();
-            }
-
-            if (_activeProjectList == null)
+            if (_projectList == null)
             {
                 //Create the Project List
-                _activeProjectList = new List<DashboardProject>();
+                _projectList = new List<DashboardProject>();
+            }
+
+            if (_projectNameList == null)
+            {
+                //Create the List for the Project
+                _projectNameList = new List<string>();
             }
 
             if (_activeProjectTaskList == null)
@@ -122,25 +116,28 @@ namespace Process_DashboardToolBar
                 _activeProjectTaskList = new List<DashboardTask>();
             }
 
-            IsProcessDashboardRunning = false;
+            if (_activeProjectTaskNameList == null)
+            {
+                //Create the Task List
+                _activeProjectTaskNameList = new List<string>();
+            }
 
             //Clear the Task Resource List
             if(_activeTaskResourceList == null)
             {
                 //Create the Project task List
                 _activeTaskResourceList = new List<DashboardResource>();
-                _activeTaskResourceList.Clear();
             }
 
             //Clear the Task Resource List
-            if (_oldTaskResourceList == null)
+            if (_oleTaskResourceList == null)
             {
                 //Create the Project task List
-                _oldTaskResourceList = new List<OleMenuCommand>();
-                _oldTaskResourceList.Clear();
-            }            
+                _oleTaskResourceList = new List<OleMenuCommand>();
+            }
 
-    }
+            IsProcessDashboardRunning = false;
+        }
         #endregion
 
         #region Package Members
@@ -151,11 +148,11 @@ namespace Process_DashboardToolBar
         /// </summary>
         protected override void Initialize()
         {
-            //Initialize the Command Handlers
-            InitializeCommandHandlers();
-
             //Initialize the Rest API Services
             InitializeRestAPIServices();
+
+            //Initialize the Command Handlers
+            InitializeCommandHandlers();
 
             //Initialize the Base Initializers      
             base.Initialize();
@@ -163,17 +160,8 @@ namespace Process_DashboardToolBar
             //Initialize the Tool Window
             ProcessDashboardToolWindowCommand.Initialize(this);
 
-             //Select the Project Name to Empty
-            _currentSelectedProjectName = string.Empty;
-
-            //Get the Project Lidt from the Information
-            GetProjectListInformationOnStartup();
-
-            //Get the Selected Project Information
-            GetSelectedProjectInformationOnStartup();
-
-            //Listen for Process Dashboard Changes
-            ListenForProcessDashboardEvents();
+            //Initiate the connection with the Process Dashboard
+            AttemptToConnectToDashboard(false);
         }
 
         private void InitializeRestAPIServices()
@@ -181,9 +169,19 @@ namespace Process_DashboardToolBar
             //Initialize the Rest API Services for Dash API
             _pDashAPI = RestService.For<IPDashAPI>("http://localhost:2468/");
         }
-        #endregion
 
+        /// <summary>
+        /// Dispose Interface for Disposing the Object
+        /// </summary>
+        public void Dispose()
+        {
+
+        }
+
+        #endregion
+        
         #region Menu Item Operations [Item Call Back and Combo Box Status Check and Query Status for the Commands]
+
         /// <summary>
         /// Adds our command handlers for menu (commands must exist in the .vsct file).
         /// </summary>
@@ -203,25 +201,25 @@ namespace Process_DashboardToolBar
                 switch ((PkgCmdIDList)id)
                 {
                     case PkgCmdIDList.cmdidTask:
-                        menuItem = new OleMenuCommand(OnMenuTaskDynamicCombo, menuCommandID)
+                        menuItem = new OleMenuCommand(OnMenuProjectDropDownCombo, menuCommandID)
                         {
                             ParametersDescription = "$"
                         };
-                        _projectComboList = menuItem;
+                        _projectComboBox = menuItem;
                         break;
                     case PkgCmdIDList.cmdidTaskList:
-                        menuItem = new OleMenuCommand(OnMenuMyDynamicComboGetList, menuCommandID);
+                        menuItem = new OleMenuCommand(OnMenuProjectDropDownComboGetList, menuCommandID);
                         break;
 
                     case PkgCmdIDList.cmdProjectDetails:
-                        menuItem = new OleMenuCommand(OnMenuTaskDynamicComboTaskList, menuCommandID)
+                        menuItem = new OleMenuCommand(OnMenuTaskDropDownCombo, menuCommandID)
                         {
                             ParametersDescription = "$"
                         };
-                        projectTaskListComboBox = menuItem;
+                        _taskComboBox = menuItem;
                         break;
                     case PkgCmdIDList.cmdidProjectList:
-                        menuItem = new OleMenuCommand(OnMenuMyDynamicComboGetTaskList, menuCommandID);
+                        menuItem = new OleMenuCommand(OnMenuTaskDropDownComboGetList, menuCommandID);
                         break;
                     default:
                         menuItem = new OleMenuCommand(MenuItemCallback, menuCommandID);
@@ -258,17 +256,17 @@ namespace Process_DashboardToolBar
                                 break;
                             case PkgCmdIDList.cmdidReportList:
                                 {
-                                    _ReportListButton = menuItem;
+                                    _reportListButton = menuItem;
                                 }
                                 break;
                             case PkgCmdIDList.cmdidTimeLog:
                                 {
-                                    _TimeLogButton = menuItem;
+                                    _timeLogButton = menuItem;
                                 }
                                 break;
                             case PkgCmdIDList.cmdidDefectLog:
                                 {
-                                    _DefectLogButton = menuItem;
+                                    _defectLogButton = menuItem;
                                 }
                                 break;
                             default:
@@ -278,13 +276,14 @@ namespace Process_DashboardToolBar
                         break;
                 }
                 //Add the Command for Menu Item to the List
-                if(menuItem != _ReportListButton)
+                if(menuItem != _reportListButton)
                 {
                     mcs.AddCommand(menuItem);
                 }
                 
             }
         }
+
 
         /// <summary>
         /// This function is the callback used to execute a command when the a menu item is clicked.
@@ -300,33 +299,22 @@ namespace Process_DashboardToolBar
                 {
                     case PkgCmdIDList.cmdidPlay:
                         {
-                            //Play Commamd 
+                            //Play Command
                             ProcessTimerPlayCommand();
-
-                            //Update the Finish Button on CheckBox Selected
-                            UpdateTheButtonStateOnButtonCommandClick();
                         }
                         break;
                     case PkgCmdIDList.cmdidPause:
                         {
                             //Pause Command
                             ProcessTimerPauseCommand();
-
-                            //Update the Finish Button on Finish Button Click
-                            UpdateTheButtonStateOnButtonCommandClick();
-
                         }
                         break;
                     case PkgCmdIDList.cmdidFinish:
                         {
                             //Finish Command
                             ProcessTimerFinishCommand();
-
-                            //Update the Finish Button on Finish Button Click
-                            UpdateTheButtonStateOnButtonCommandClick();
                         }
                         break;
-
                     case PkgCmdIDList.cmdidDefect:
                         {
                             //Open the Defect Dialog
@@ -355,16 +343,15 @@ namespace Process_DashboardToolBar
            
         }
 
+
         /// <summary>
-        ///  A DYNAMICCOMBO allows the user to type into the edit box or pick from the list. The 
-        ///	 list of choices is usually fixed and is managed by the command handler for the command.
+        /// This method is called by the IDE to retrieve/set the name of the selected project.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnMenuTaskDynamicCombo(object sender, EventArgs e)
+        private void OnMenuProjectDropDownCombo(object sender, EventArgs e)
         {
-            HandlingResetEvent = false;
-            var eventArgs = e as OleMenuCmdEventArgs;
+            OleMenuCmdEventArgs eventArgs = e as OleMenuCmdEventArgs;
             if (eventArgs == null) return;
 
             var input = eventArgs.InValue;
@@ -374,104 +361,26 @@ namespace Process_DashboardToolBar
             if (vOut != IntPtr.Zero)
             {
                 // when vOut is non-NULL, the IDE is requesting the current value for the combo
-                Marshal.GetNativeVariantForObject(_currentSelectedProjectName, vOut);
-
-                if(_currentSelectedProjectName == _noConnectionState || _currentSelectedProjectName == "")
-                {
-                    UpdateCurrentSelectedProject(_noConnectionState);
-                }
+                Marshal.GetNativeVariantForObject(_projectNameToDisplay, vOut);
             }
             else if (input != null)
             {
-               
-                // Was a valid new value selected or typed in?
+                // when input is non-NULL, the IDE is asking us to change the value for the combo
                 var newChoice = input.ToString();
-                
-                //Check for NULL
-                if (string.IsNullOrEmpty(newChoice))
-                    return;
-
-                // First check to see if Add Defect tool window is dirty and give user a chance to close it.
-                var canClose = false;
-
-                QueryClose(out canClose);
-
-                if (!canClose) return; // Cancels the combo change and reverts back to previous value.
-
-                var splitChoice = newChoice.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries); // Assume first is ID
-
-                //Check if the Display PD Is Not Running
-                if(newChoice == _noConnectionState)
-                {                   
-                    if (IsProcessDashboardRunning == false)
-                    {
-                         // Dialog box with two buttons: yes and no. [3]
-                         DialogResult result = MessageBox.Show(_displayPDStartRequired, _displayPDStartMsgTitle, MessageBoxButtons.OKCancel,MessageBoxIcon.None);
-
-                        if(result == DialogResult.OK)
-                        {
-                            //Try to Get the Data to Sync Up the Process Data
-                            SyncUpProcessDashboardDataOnManualProcessStart();
-                        }                       
-                    }                   
-
-                    if (_currentTaskChoice == "")
-                    {
-                        projectTaskListComboBox.Enabled = false;
-                        UpdateUIControls(false);
-                    }
-
-                    if (IsProcessDashboardRunning == false)
-                    {
-                        _currentSelectedProjectName = _noConnectionState;
-                        //Update the Selected Project Information
-                        UpdateCurrentSelectedProject(newChoice);
-                    }
-                    else
-                    {
-                        projectTaskListComboBox.Enabled = false;
-                        RemoveProjectItem(_noConnectionState);
-                        projectTaskListComboBox.Enabled = true;
-                    }
-                  
-                }
-               
-                else
+                if (!string.IsNullOrEmpty(newChoice))
                 {
-                    //Select the Project Name
-                    _currentSelectedProjectName = newChoice;
-
-                    //Set the Active Task ID
-                    ProcessSetActiveProjectID();
-
-                    //Update the Selected Project Information
-                    UpdateCurrentSelectedProject(newChoice);
-
-                    //Set the Current Task Choice to NULL        
-                    _currentTaskChoice = "";
-
-                    //No Active Task Choice Information
-                    _currentActiveTaskInfo = null;
-
-                    /* To DO Pending -- Need to Check this Logic Once the Project Change
-                    How to Get the Information 
-                    //Get the Current Active Task and Update the UI Once the Project Name Changed By the User
-                    */
-                    ProcessSetActiveTaskIDBasedOnProjectStat(true);      
-                   
+                    UserSelectedNewProject(newChoice);
                 }
-                
             }
-            
         }
 
         /// <summary>
-        ///  A DYNAMICCOMBO allows the user to type into the edit box or pick from the list. The 
-        ///	 list of choices is usually fixed and is managed by the command handler for the command.
+        /// This method is called by the IDE to retrieve the list of projects that should be
+        /// displayed in the drop-down menu for the project combo box.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnMenuMyDynamicComboGetList(object sender, EventArgs e)
+        private void OnMenuProjectDropDownComboGetList(object sender, EventArgs e)
         {
 
             if ((null == e) || (e == EventArgs.Empty))
@@ -490,12 +399,16 @@ namespace Process_DashboardToolBar
                 }
                 else if (vOut != IntPtr.Zero)
                 {
-                    if(IsProcessDashboardRunning == true)
+                    Marshal.GetNativeVariantForObject(_projectNameList.ToArray(), vOut);
+
+                    // When the dashboard is not running, the project combo displays the message
+                    // "NO CONNECTION". If the user clicks on the combo box at that time, this
+                    // method will be called. Respond to their click by displaying a dialog box,
+                    // asking if they want to connect Visual Studio to the dashboard.
+                    if (IsProcessDashboardRunning == false)
                     {
-                        RemoveProjectItem(_noConnectionState);
+                        ShowDialogAskingUserToLaunchDashboard();
                     }
-                    
-                    Marshal.GetNativeVariantForObject(_activityComboList.ToArray(), vOut);
                 }
                 else
                 {
@@ -507,14 +420,13 @@ namespace Process_DashboardToolBar
 
 
         /// <summary>
-        ///  A DYNAMICCOMBO allows the user to type into the edit box or pick from the list. The 
-        ///	 list of choices is usually fixed and is managed by the command handler for the command.
+        /// This method is called by the IDE to retrieve/set the name of the selected task.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnMenuTaskDynamicComboTaskList(object sender, EventArgs e)
+        private void OnMenuTaskDropDownCombo(object sender, EventArgs e)
         {
-            var eventArgs = e as OleMenuCmdEventArgs;
+            OleMenuCmdEventArgs eventArgs = e as OleMenuCmdEventArgs;
             if (eventArgs == null) return;
 
             var input = eventArgs.InValue;
@@ -524,62 +436,35 @@ namespace Process_DashboardToolBar
             if (vOut != IntPtr.Zero)
             {
                 // when vOut is non-NULL, the IDE is requesting the current value for the combo
-                Marshal.GetNativeVariantForObject(_currentTaskChoice, vOut);
+                Marshal.GetNativeVariantForObject(_taskNameToDisplay, vOut);
 
-                if (_currentTaskChoice == "" || _currentTaskChoice == _noConnectionState || _currentTaskChoice ==null || _currentTaskChoice==_noTaskPresent)
+                // if there are no active tasks (for example, during a disconnected state or for an
+                // empty team project), disable the task selection combo box. (We wait until this
+                // moment to ensure that VS has retrieved the new _taskNameToDisplay. VS will stop
+                // asking this method for the display text after we disable the combo box.)
+                if (_activeProjectTaskList.Count == 0)
                 {
-                    projectTaskListComboBox.Enabled = false;
-                    UpdateUIControls(false);
-                }
-                else
-                {
-                    projectTaskListComboBox.Enabled = true;
+                    _taskComboBox.Enabled = false;
                 }
             }
             else if (input != null)
             {
-                HandlingResetEvent = false;
-                // Was a valid new value selected or typed in?
+                // when input is non-NULL, the IDE is asking us to change the value for the combo
                 var newChoice = input.ToString();
-                if (string.IsNullOrEmpty(newChoice))
+                if (!string.IsNullOrEmpty(newChoice))
                 {
-                    UpdateTimerControls(false);
-                    return;
+                    UserSelectedNewTask(newChoice);
                 }
-                    
-                // First check to see if Add Defect tool window is dirty and give user a chance to close it.
-                var canClose = false;
-                QueryClose(out canClose);
-                if (!canClose) return; // Cancels the combo change and reverts back to previous value.
-
-                var splitChoice = newChoice.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries); // Assume first is ID
-
-                _currentTaskChoice = newChoice;
-
-                //Set the Task List Infor
-                UpdateTaskListInfo(newChoice);
-
-                //Set the Active Task ID
-                ProcessSetActiveTaskID();
-
-                //Update the Timer Controls
-                UpdateTimerControls(true);
-
-                //Update the Button State Based on the Timer Status
-                ClearAndUpdateTimersStateOnSelectionChange();
-
-                //Update the Task resources List
-                GetActiveTaskResourcesList();
             }
-
         }
+
         /// <summary>
-        ///  A DYNAMICCOMBO allows the user to type into the edit box or pick from the list. The 
-        ///	 list of choices is usually fixed and is managed by the command handler for the command.
+        /// This method is called by the IDE to retrieve the list of tasks that should be
+        /// displayed in the drop-down menu for the task combo box.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnMenuMyDynamicComboGetTaskList(object sender, EventArgs e)
+        private void OnMenuTaskDropDownComboGetList(object sender, EventArgs e)
         {
 
             if ((null == e) || (e == EventArgs.Empty))
@@ -598,993 +483,430 @@ namespace Process_DashboardToolBar
                 }
                 else if (vOut != IntPtr.Zero)
                 {
-                    Marshal.GetNativeVariantForObject(_activityTaskList.ToArray(), vOut);
+                    Marshal.GetNativeVariantForObject(_activeProjectTaskNameList.ToArray(), vOut);
                 }
                 else
                 {
                     return;
                 }
             }
-
         }
 
-        /// <summary>
-        /// Query Status Call Back for the Pause Button
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void BeforeQueryStatusCallbackPauseButton(object sender, EventArgs e)
-        {
-            var cmd = (OleMenuCommand)sender;
-            cmd.Visible = true;
-            cmd.Enabled = true;          
-        }
-
-        /// <summary>
-        /// Query Status Call Back for Play Button
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void BeforeQueryStatusCallbackPlayButton(object sender, EventArgs e)
-        {
-            var cmd = (OleMenuCommand)sender;
-            cmd.Visible = true;
-            cmd.Enabled = true;
-          
-        }
-
-        /// <summary>
-        /// Query Status Call Back
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void BeforeQueryStatusCallback(object sender, EventArgs e)
-        {
-            var cmd = (OleMenuCommand)sender;
-            cmd.Visible = true;
-            cmd.Enabled = true;                      
-        }
-
-        /// <summary>
-        /// Query Statys Call Back
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void BeforeQueryStatusCallbackTest(object sender, EventArgs e)
-        {
-            var cmd = (OleMenuCommand)sender;
-            cmd.Visible = false;
-            cmd.Enabled = false;
-        }
         #endregion
-        #region Commands Section [Request Information from REST API Server]
-        /// <summary>
-        /// Timer Play Command
-        /// </summary>
-        private async void ProcessTimerPlayCommand()
-        {
-            try
-            {
-                //Start the Play Command
-                DashboardTask projectTaskInfo = _activeProjectTaskList.Find(x => x.FullName == _currentTaskChoice);
-             
-                //Update the Parameters
-                var param = new Dictionary<string, object> { { "timing", "true" } , { "activeTaskId", projectTaskInfo.Id } };
 
-                //Send the Rest API Command to Change the Timer State
-                TimerApiResponse t2 = await _pDashAPI.ChangeTimerState(param);
+        #region Management of state (active project/task, play/pause/defect/finish button status)
 
-                Console.WriteLine("Play");
-
-                //Update the Button States
-                _pauseButton.Checked = false;
-                _playButton.Checked = true;
-                _playButton.Enabled = true;
-
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                UpdateUIControls(false);
-            }
-           
-        }
-
-
-        /// <summary>
-        /// Process Ser Active Project ID
-        /// </summary> 
-        private async void ProcessSetActiveProjectID()
-        {
-            try
-            {
-                 //Get the Project ID Details
-                DashboardProject projectDetails = _activeProjectList.Find(x => x.Name == _currentSelectedProjectName);
-
-                string strProjectIDFormat = string.Format("{0}:root", projectDetails.Id);
-
-                //Create the Parameters
-                var param = new Dictionary<string, object> { { "activeTaskId", strProjectIDFormat } };
-
-                //Update the Timer API Response
-                TimerApiResponse t2 = await _pDashAPI.ChangeTimerState(param);
-
-                if(t2!=null)
-                {
-
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                UpdateUIControls(false);
-            }
-
-        }
-
-        /// <summary>
-        /// Process Ser Active TasK ID
-        /// </summary> 
-        private async void ProcessSetActiveTaskID()
-        {
-            try
-            {
-                //Get the Project Task Information
-                DashboardTask projectTaskInfo = _activeProjectTaskList.Find(x => x.FullName == _currentTaskChoice);
-
-                  //Create the Parameters
-                var param = new Dictionary<string, object> {{ "activeTaskId", projectTaskInfo.Id } };
-
-                //Update the Timer API Response
-                TimerApiResponse t2 = await _pDashAPI.ChangeTimerState(param);
-
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                UpdateUIControls(false);
-            }
-
-        }
-
-        /// <summary>
-        /// Process Ser Active TasK ID
-        /// </summary> 
-        private async void ProcessSetActiveProcessIDBasedOnProjectStat(bool forceReload)
-        {         
-            try
-            {
-                //Get the Timer State
-                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
-
-                if(timerResponse != null && timerResponse.Timer.ActiveTask !=null)
-                {
-                    //Check if the Project is Same or Different Selected
-                    if(forceReload || _currentSelectedProjectName != timerResponse.Timer.ActiveTask.Project.Name)
-                    {
-                        _projectComboList.Enabled = false;
-                        //Clear All the Project
-                        GetProjectListInformationOnStartup();
-
-                        //Select the Project Name
-                        _currentSelectedProjectName = timerResponse.Timer.ActiveTask.Project.Name;
-
-                        //Update the Selected Project Information
-                        UpdateCurrentSelectedProject(_currentSelectedProjectName);
-
-                        //Set the Current Task Choice to NULL        
-                        _currentTaskChoice = "";
-                        
-                        //Set the Current Active Task Information
-                        _currentActiveTaskInfo = null;
-
-                        _projectComboList.Enabled = true;
-
-                        //Update the Defect Button State
-                        UpdateDefectButtonState(timerResponse.Timer.DefectsAllowed);
-                    }
-                   
-                }
-               
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                UpdateUIControls(false);
-            }
-
-        }
-
-        /// <summary>
-        /// Process Ser Active TasK ID
-        /// </summary> 
-        private async void ProcessSetActiveTaskIDBasedOnProjectStat(bool forceReload)
-        {
-
-            try
-            {
-                //Get the Timer State
-                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
-
-                if (timerResponse != null && timerResponse.Timer.ActiveTask !=null)
-                {
-                    if(forceReload || _currentTaskChoice != timerResponse.Timer.ActiveTask.FullName)
-                    {
-                        //Disable and Enable Done to Update the Combo Box
-                        projectTaskListComboBox.Enabled = false;
-
-                        _currentTaskChoice = null;
-                        //Get Information from the Project Related to the Tasks
-                        GetTaskListInformation();
-                        
-                        //Update the Current Task
-                        _currentTaskChoice = timerResponse.Timer.ActiveTask.FullName;
-
-                        if(_currentTaskChoice == null)
-                        {
-                            _currentTaskChoice = _noTaskPresent;
-                        }
-
-                        //Current Task Choice 
-                        _currentActiveTaskInfo = timerResponse.Timer.ActiveTask;
-
-                        //Set the Task List Infor
-                        UpdateTaskListInfo(_currentTaskChoice);
-
-                        //Enable Again to Refresh the UI
-                        projectTaskListComboBox.Enabled = true;
-
-                        //Update the Timer Controls
-                        UpdateTimerControls(true);
-
-                        //Update the Button State Based on the Timer Status
-                        ClearAndUpdateTimersStateOnSelectionChange();
-
-                        //Update the Task Resources List
-                        GetActiveTaskResourcesList();
-
-                        if (_currentTaskChoice == _noTaskPresent)
-                        {
-                            UpdateUIControls(false);
-                        }
-                        //Update the Defect Button State
-                        UpdateDefectButtonState(timerResponse.Timer.DefectsAllowed);
-
-                    }
-                 
-                }
-
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                UpdateUIControls(false);
-            }
-
-        }
-
-        /// <summary>
-        /// Process Finish Button State
-        /// </summary>
-        private async void ProcessAndUpdateCompleteButtonStatus()
-        {
-            try
-            {
-                //Get the Project List Information on the Startup
-                DashboardTask projectTaskInfo = _activeProjectTaskList.Find(x => x.FullName == _currentTaskChoice);
-               
-                //Set the Parameters for the Active Task ID
-                var param = new Dictionary<string, object> { { "activeTaskId", projectTaskInfo.Id } };
-
-                TimerApiResponse t2 = await _pDashAPI.ChangeTimerState(param);
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                UpdateUIControls(false);
-            }
-
-        }
-
-        /// <summary>
-        /// Timer Pause Command
-        /// </summary>
-        private async void ProcessTimerPauseCommand()
-        {
-            try
-            {
-                //Get the Current Selected Project Task
-                DashboardTask projectTaskInfo = _activeProjectTaskList.Find(x => x.FullName == _currentTaskChoice);
-
-                 //Add the Active Task ID
-                var param = new Dictionary<string, object> { { "timing", "false" }, { "activeTaskId", projectTaskInfo.Id } };
-
-                //Change the Timer State
-                TimerApiResponse t3 = await _pDashAPI.ChangeTimerState(param);
-
-                Console.WriteLine("Pause");
-
-                //Set the Checked Status
-                _playButton.Checked = false;
-                _pauseButton.Checked = true;
-                _pauseButton.Enabled = true;
-               
-            }
-            //Handle all the Exception
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                //Update the UI Controls
-                UpdateUIControls(false);
-            }          
-
-        }
-
-        /// <summary>
-        /// Timer Finish Command
-        /// </summary>
         private async void ProcessTimerFinishCommand()
         {
             try
             {
                 //Get the Current Selected Project Task
-                DashboardTask projectTaskInfo = _activeProjectTaskList.Find(x => x.FullName == _currentTaskChoice);
-
-           
-                //Check for NULL Task Completion Date
-                if (projectTaskInfo.CompletionDate != null)
+                DashboardTask thisTask = _activeTask;
+                if (thisTask == null || thisTask.FullName == null)
                 {
-                    //Add the Active Task ID
-                    var param = new Dictionary<string, object> { { "completionDate", null } };
-
-                    // Change the Project Task State
-                    TaskDetailsApiResponse projectTaskDetail = await _pDashAPI.ChangeTaskDetails(projectTaskInfo.Id, param);
-
-                    //Set the Command ID to NULL
-                    Console.WriteLine("Completion Date Set to NULL");
-
-                }
-                else
-                {
-                    //Convert the Time Details on the Startup
-                    string strTime= DateTime.UtcNow.ToString("o");
-                    //Add the Active Task ID
-                    var param = new Dictionary<string, object> {{ "completionDate", strTime} };
-
-                    // Change the Project Task State
-                    TaskDetailsApiResponse projectTaskDetail = await _pDashAPI.ChangeTaskDetails(projectTaskInfo.Id, param);
-
-                    Console.WriteLine("Completion Date Set to Value = {0}",strTime);
+                    return;
                 }
 
-               
+                // preemptively update the display so the UI feels responsive
+                bool taskShouldBeMarkedComplete = (thisTask.CompletionDate == null);
+                SetFinishButtonText(taskShouldBeMarkedComplete);
+
+                // contact the dashboard to toggle the completion date status for the active task
+                String newCompletionDate = (taskShouldBeMarkedComplete ? "now" : null);
+                var param = new Dictionary<string, object> { { "completionDate", newCompletionDate } };
+                TaskDetailsApiResponse newTaskDetail = await _pDashAPI.ChangeTaskDetails(thisTask.Id, param);
+
+                // update the Finish button with the final state
+                SyncFinishButtonState(newTaskDetail.Task);
             }
-            //Handle all the Exception
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());               
+                TransitionToDisconnectedState(ex);
             }
-
         }
 
-        /// <summary>
-        /// Update the Task Status On All the Buttons Click
-        /// </summary>
-        private void UpdateTheButtonStateOnButtonCommandClick()
+        private void UserSelectedNewProject(string newProjectName)
         {
-            //Get the Task List Information
-            GetTaskListInformation();
+            // find the project with the given name
+            DashboardProject newProject = _projectList.Find(x => x.Name == newProjectName);
+            if (newProject != null)
+            {
+                // eagerly update the text we display in the combo boxes to appear responsive
+                _projectNameToDisplay = newProject.Name;
+                _taskNameToDisplay = " ";
 
-            //Temporary Added to Sync Up the States
-            System.Threading.Thread.Sleep(20);
+                // now ask the dashboard to point the active task to this project
+                String newProjectRootTaskId = newProject.Id + ":root";
+                ChangeTimerState("activeTaskId", newProjectRootTaskId);
+            }
+        }
 
-             //Upate the Finish Button State
-            UpdateTheFinishButtonStateOnCommandClick();
+        private void UserSelectedNewTask(String newTaskName)
+        {
+            // find the task with the given name
+            DashboardTask newTask = _activeProjectTaskList.Find(x => x.FullName == newTaskName);
+            if (newTask != null)
+            {
+                // eagerly update the text we display in the combo box to appear responsive
+                _taskNameToDisplay = newTask.FullName;
 
-            //Clear the Timer State and Update the Same on Startup
-            ClearAndUpdateTimersStateOnSelectionChange();
+                // now ask the dashboard to make this item the active task
+                ChangeTimerState("activeTaskId", newTask.Id);
+            }
+        }
+
+        private void ProcessTimerPauseCommand()
+        {
+            // ask the dashboard to stop the timer
+            ChangeTimerState("timing", "false");
+        }
+
+        private void ProcessTimerPlayCommand()
+        {
+            // ask the dashboard to start the timer
+            ChangeTimerState("timing", "true");
         }
 
         /// <summary>
-        /// Finish Button State on Command Click
+        /// Ask the dashboard to change the timer state, and update the UI based on the response
         /// </summary>
-        private async void UpdateTheFinishButtonStateOnCommandClick()
+        private async void ChangeTimerState(String key, String value)
         {
             try
             {
-                 //Get the Timer State
-                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
-                
-                //Check the Timer Response
-                if (timerResponse != null && timerResponse.Timer.ActiveTask !=null)
-                {
-                    //Update the Complete Button Status on Startup
-                    UpdatetheCompleteButtonStateOnCompleteTime(timerResponse.Timer.ActiveTask.CompletionDate.ToString());
+                // perform a REST API call to change the timer state
+                var param = new Dictionary<string, object> { { key, value } };
+                TimerApiResponse timerResponse = await _pDashAPI.ChangeTimerState(param);
+                _lastLocalTimerChange = DateTime.Now;
 
-                    //Update the Defect Button State
-                    UpdateDefectButtonState(timerResponse.Timer.DefectsAllowed);
-                }
-
+                // update the user interface controls with the data from the dashboard's response
+                SyncUserInterfaceToTimerState(timerResponse);
             }
             catch (Exception ex)
             {
-                //Handle the Exception
-                Console.WriteLine(ex.ToString());
-
-                //Update the UI Controls
-                UpdateUIControls(false);
+                // if our call to change the timer state failed, tell the user we are no longer connected.
+                TransitionToDisconnectedState(ex);
             }
         }
+
+        /// <summary>
+        /// Retrieve the current timer state from the dashboard, and update our controls to match the
+        /// dashboard's currently active project, task, and play/pause status.
+        /// </summary>
+        /// <returns></returns>
+        private async System.Threading.Tasks.Task ResyncUserInterfaceToExternalTimerState(bool skipIfRecent)
+        {
+            // When we tell the dashboard to change the timer state, the dashboard will oblige.  But a moment
+            // later, we will receive an asynchronous event notification from the dashboard acknowledging
+            // that the timer state has changed. We can generally ignore those events if they immediately
+            // follow a change we made.
+            if (skipIfRecent)
+            {
+                TimeSpan timeSinceLastTimerChange = DateTime.Now.Subtract(_lastLocalTimerChange);
+                if (timeSinceLastTimerChange.TotalSeconds < 1)
+                {
+                    return;
+                }
+            }
+
+            try
+            {
+                // make a REST API call to retrieve the current timer state
+                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
+
+                // update the user interface controls with the data from the dashboard's response
+                SyncUserInterfaceToTimerState(timerResponse);
+            }
+            catch (Exception ex)
+            {
+                // if our call to retrieve the timer state failed, tell the user we are no longer connected.
+                TransitionToDisconnectedState(ex);
+            }
+        }
+
+        /// <summary>
+        /// Update all of the user interface controls to match the dashboard's currently active
+        /// project, task, and play/pause status.
+        /// </summary>
+        /// <param name="timerResponse">a response that was just received from a call to the Timer API</param>
+        private void SyncUserInterfaceToTimerState(TimerApiResponse timerResponse)
+        {
+            // we have a valid timer state from the dashboard. Record the fact that the dashboard is running,
+            // and update the controls in our user interface to match the current state.
+            IsProcessDashboardRunning = true;
+            SyncSelectedProjectAndTask(timerResponse.Timer.ActiveTask);
+            SyncControlButtonState(timerResponse.Timer);
+        }
+
+        private void SyncSelectedProjectAndTask(DashboardTask newActiveTask)
+        {
+            // display the name of the new project in the project combo box
+            _projectNameToDisplay = newActiveTask.Project.Name;
+            refreshCombo(_projectComboBox);
+
+            if (newActiveTask.FullName == null)
+            {
+                // if the active task has no full name, it represents the root of an
+                // empty project. Display a "no tasks" message.
+                _taskNameToDisplay = _noTasksPresent;
+                
+                // clear the list of items in the task combo box, since this project
+                // doesn't contain any tasks
+                _activeProjectTaskList.Clear();
+                _activeProjectTaskNameList.Clear();
+
+                // save the new active project
+                _activeProject = newActiveTask.Project;
+            }
+            else
+            {
+                // display the name of the new task
+                _taskNameToDisplay = newActiveTask.FullName;
+
+                // if the project has changed, update the list of tasks in the project
+                if (IsActiveProject(newActiveTask.Project) == false)
+                {
+                    // Discard the list of tasks from the old project.
+                    _activeProjectTaskList.Clear();
+                    _activeProjectTaskNameList.Clear();
+
+                    // the lines below will reload the list of tasks asynchronously. In the meantime,
+                    // install a single placeholder task so the combo box will remain enabled
+                    _activeProjectTaskList.Add(newActiveTask);
+                    _activeProjectTaskNameList.Add(newActiveTask.FullName);
+
+                    // asynchronously load the list of tasks in the new project.
+                    _activeProject = newActiveTask.Project;
+                    RetrieveTaskListForActiveProject();
+                }
+            }
+            refreshCombo(_taskComboBox);
+
+            // if the active task has changed, update the list of resources for the task
+            if (IsActiveTask(newActiveTask) == false)
+            {
+                _activeTask = newActiveTask;
+                RetrieveResourceListForActiveTask();
+            }
+        }
+
+        private void SyncControlButtonState(TimerData timerData)
+        {
+            // Update appearance of the Pause button
+            _pauseButton.Enabled = timerData.TimingAllowed;
+            _pauseButton.Checked = timerData.TimingAllowed && !timerData.Timing;
+
+            // update appearance of the Play button
+            _playButton.Enabled = timerData.TimingAllowed;
+            _playButton.Checked = timerData.TimingAllowed && timerData.Timing;
+
+            // update the appearance of the defect button
+            _defectButton.Enabled = timerData.DefectsAllowed;
+
+            // make the time log and defect log options visible
+            _timeLogButton.Visible = true;
+            _defectLogButton.Visible = true;
+
+            // update the appearance of the finish button
+            _finishButton.Enabled = timerData.TimingAllowed;
+            SetFinishButtonText(timerData.ActiveTask.CompletionDate != null);
+        }
+
+        private void SyncFinishButtonState(DashboardTask task)
+        {
+            if (IsActiveTask(task))
+            {
+                _activeTask.CompletionDate = task.CompletionDate;
+                SetFinishButtonText(task.CompletionDate != null);
+            }
+        }
+
+        private void SetFinishButtonText(bool completed)
+        {
+            _finishButton.Text = (completed ? "Completed" : "Not Finished");
+        }
+
+        private bool IsActiveTask(DashboardTask t)
+        {
+            return (t != null && _activeTask != null && t.Id == _activeTask.Id && t.FullName == _activeTask.FullName);
+        }
+
+        private bool IsActiveProject(DashboardProject p)
+        {
+            return (p != null && _activeProject != null && p.Id == _activeProject.Id && p.Name == _activeProject.Name);
+        }
+
         #endregion
 
-        #region Get Information on Startup Routine Once the Toolbar is Starting Up
+        #region Manage the connection to the dashboard, and load data on startup
+
+        private void ShowDialogAskingUserToLaunchDashboard()
+        {
+            // Show dialog box asking the user to launch the Process Dashboard
+            DialogResult result = MessageBox.Show(_displayPDStartRequired, _displayPDStartMsgTitle, MessageBoxButtons.OKCancel, MessageBoxIcon.None);
+
+            if (result == DialogResult.OK)
+            {
+                AttemptToConnectToDashboard(true);
+            }
+        }
+
+        private async void AttemptToConnectToDashboard(bool showDialogOnError)
+        {
+            // display a message advising the user that we are attempting to connect
+            DisableControls(_connectingMessage);
+
+            // attempt to connect to the dashboard and sync to its current state
+            await ResyncUserInterfaceToExternalTimerState(false);
+
+            //Check if the Process Dashboard is Running and Alive
+            if (IsProcessDashboardRunning == true)
+            {
+                // if we were able to connect to the dashboard successfully, retrieve the list of projects,
+                // and start an event listener loop to stay in sync with externally triggered changes
+                RetrieveProjectList();
+                ListenForProcessDashboardEvents();
+            }
+            else if (showDialogOnError)
+            {
+                // if we were unable to contact the dashboard, possibly show a dialog advising the user about the problem
+                DialogResult result = MessageBox.Show(_displayPDConnectionFailed, _displayPDConnectFailedTitle, MessageBoxButtons.OKCancel, MessageBoxIcon.None);
+
+                // if the user clicked "OK" in the error dialog (rather than Cancel), try connecting again.
+                if (result == DialogResult.OK)
+                {
+                    AttemptToConnectToDashboard(true);
+                }
+            }
+        }
+        
         /// <summary>
-        /// Get the Projct List Information from Process Dashboard.
-        /// Rest API call will Process Dashboard to Get the Data 
+        /// Retrieve the list of projects from Process Dashboard.
         /// </summary>
-        private async void GetProjectListInformationOnStartup()
+        private async void RetrieveProjectList()
         {
             try
             {
+                // Retrieve the list of projects from the dashboard
                 ProjectListApiResponse projectInfo = await _pDashAPI.GetProjectList();
 
                 if (projectInfo != null)
                 {
-                    IsProcessDashboardRunning = true;
-                    //Clear the List 
-
-                    //Clear the Project Item from the List
-                    RemoveProjectItem(_noConnectionState);
-                    _activityComboList.Clear();
-                    _activeProjectList.Clear();
+                    //Clear the old projects from the List
+                    _projectList.Clear();
+                    _projectNameList.Clear();
 
                     //Add the Project and Items in a List
                     foreach (var item in projectInfo.Projects)
                     {
                         //Add the Items in the List
-                        _activityComboList.Add(item.Name);
-                        _activeProjectList.Add(item);
+                        _projectList.Add(item);
+                        _projectNameList.Add(item.Name);
                     }
                 }
-
             }
             catch (Exception ex)
             {
-                IsProcessDashboardRunning = false;
-                Console.WriteLine(ex.ToString());
-                UpdateUIControls(false);
+                TransitionToDisconnectedState(ex);
             }
-
-        }
-        /// <summary>
-        /// Get Selected Project Information on Startup
-        /// </summary>
-        private async void GetSelectedProjectInformationOnStartup()
-        {
-            try
-            {
-                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
-
-                if (timerResponse != null && timerResponse.Timer.ActiveTask !=null)
-                {
-                    //Get the Selected Project Name
-                    _currentSelectedProjectName = timerResponse.Timer.ActiveTask.Project.Name;
-
-                    //Update the Selected Project Status
-                    UpdateCurrentSelectedProject(_currentSelectedProjectName);
-                   
-                    //Get the Task List Information
-                    GetTaskListInformation();
-
-                    //Current Task Choice
-                    _currentTaskChoice =  timerResponse.Timer.ActiveTask.FullName;
-                    
-                    //Set the Current Active Task Inforamtion
-                    _currentActiveTaskInfo = timerResponse.Timer.ActiveTask;
-
-                    UpdateTaskListInfo(_currentTaskChoice);
-
-                    //Process the Startup Active ID
-                    ProcessSetActiveTaskID();
-
-                    //Update the Timer Controls to True
-                    UpdateTimerControls(true);
-
-                    //Update the Complete Button Status on Startup
-                    UpdatetheCompleteButtonStateOnCompleteTime(timerResponse.Timer.ActiveTask.CompletionDate.ToString());
-
-                    //Clear the Timer State and Update the Same on Startup
-                    ClearAndUpdateTimersStateOnSelectionChange();
-
-                    //Get the Active Task List
-                    GetActiveTaskResourcesList();
-
-                    //Update the defect button State
-                    UpdateDefectButtonState(timerResponse.Timer.DefectsAllowed);
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                UpdateUIControls(false);
-            }
-
         }
 
         /// <summary>
         /// Get the Task List Information from the Selected Project
         /// </summary>
-        private async void GetTaskListInformation()
-        {
-            //Check if the Project is Selected from the Avaliable Project List
-            if(_currentSelectedProjectName.Length > 0)
-            {
-                try
-                {
-                    //Get the Project ID Details
-                    DashboardProject projectDetails = _activeProjectList.Find(x => x.Name ==_currentSelectedProjectName);
-
-                    //Get teh Project Task Info
-                    ProjectTaskListApiResponse projectTaskInfo = await _pDashAPI.GetProjectTaskList(projectDetails.Id);
-
-                    //Get the Project Task Information
-                    if (projectTaskInfo != null)
-                    {
-                        //Clear the Task List
-                        _activityTaskList.Clear();
-
-                        //Clear the Project Task List
-                        _activeProjectTaskList.Clear();
-
-                        foreach (var item in projectTaskInfo.ProjectTasks)
-                        {
-                            _activityTaskList.Add(item.FullName);
-                            _activeProjectTaskList.Add(item);
-                        }
-
-                        //Enable Disable the UI Controls
-                        if(projectTaskInfo.ProjectTasks.Count == 0)
-                        {
-                            //Update the UI Controls
-                            UpdateUIControls(false);
-                        }
-                        else
-                        {
-                            //Update the UI Controls
-                            UpdateUIControls(true);
-                        }
-          
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    //Log the Exception
-                    Console.WriteLine(ex.ToString());
-                    UpdateUIControls(false);
-                }
-            }
-        }
-        #endregion
-
-        #region Update the Task and Project Status Info
-
-        /// <summary>
-        /// Manage updating the Task ListInformation
-        /// Keeps most recently searched for item at the top of the list.
-        /// </summary>
-        /// <param name="listItem">Work item to add to the list or move to top of the list.</param>
-        private void UpdateTaskListInfo(string currentTask)
-        {
-            // If the current item is in the list, remove and add at the top
-            if (_activityTaskList.Contains(currentTask))
-            {
-                _activityTaskList.Remove(currentTask);
-            }
-            _activityTaskList.Insert(0, currentTask);
-
-            //Update the Complete Task Status
-            UpdatetheCompleteTaskStatus(currentTask);
-           
-        }
-
-        /// <summary>
-        /// Update the Task Completion Status
-        /// </summary>
-        /// <param name="currentTask">Current Selected Task</param>
-        private void UpdatetheCompleteButtonStateOnCompleteTime(string completeTime)
-        {          
-            //Check if the Project Current Active Task is Not Null
-            if (completeTime != null)
-            {
-                if (completeTime != null)
-                {
-                    if(completeTime == "")
-                    {
-                        _finishButton.Enabled = true;
-                        _finishButton.Text = "Not Finished";
-                    }
-                    else
-                    {
-                        _finishButton.Text = "Completed";
-                        _finishButton.Enabled = true;
-                    }
-                    
-                }
-                else
-                {
-
-                    _finishButton.Enabled = true;
-                    _finishButton.Text = "Not Finished";
-                }
-            }
-        }
-
-        /// <summary>
-        /// Update the Task Completion Status
-        /// </summary>
-        /// <param name="currentTask">Current Selected Task</param>
-        private void UpdatetheCompleteTaskStatus(string currentTask)
-        {
-            //Get the Updated Task List from the Project
-            GetTaskListInformation();
-
-            //Find the Task from the List to Get the Id for the Project
-            DashboardTask projectTaskInfo = _activeProjectTaskList.Find(x => x.FullName == currentTask);
-
-            //Check if the Project Current Active Task is Not Null
-            if(projectTaskInfo !=null)
-            {
-                if(projectTaskInfo.CompletionDate != null)
-                {
-                    _finishButton.Text = "Completed";                 
-                    _finishButton.Enabled = true;
-                }
-                else
-                {
-                   
-                    _finishButton.Enabled = true;
-                    _finishButton.Text = "Not Finished";
-                }
-            }
-        }
-
-        /// <summary>
-        /// Manage updating the work item list.
-        /// Keeps most recently searched for item at the top of the list.
-        /// </summary>
-        /// <param name="listItem">Work item to add to the list or move to top of the list.</param>
-        private void UpdateCurrentSelectedProject(string listItem)
-        {
-            // If the current item is in the list, remove and add at the top
-            if (_activityComboList.Contains(listItem))
-            {
-                _activityComboList.Remove(listItem);
-            }
-            _activityComboList.Insert(0, listItem);
-        }
-
-        /// <summary>
-        /// Manage updating the work item list.
-        /// Keeps most recently searched for item at the top of the list.
-        /// </summary>
-        /// <param name="listItem">Work item to add to the list or move to top of the list.</param>
-        private void RemoveProjectItem(string listItem)
-        {
-            // If the current item is in the list, remove and add at the top
-            if (_activityComboList.Contains(listItem))
-            {
-                _activityComboList.Remove(listItem);
-            }           
-        }
-
-        /// <summary>
-        /// Update UI Controls
-        /// </summary>
-        /// <param name="bState">Property State</param>
-        private void UpdateUIControls(bool bState)
-        {
-            if(bState == false)
-            {
-                
-                 _playButton.Enabled = false;
-                _pauseButton.Enabled = false;
-                _defectButton.Enabled = false;
-                _finishButton.Enabled = false;
-
-                ClearCommandList();
-                _TimeLogButton.Visible = false;
-                _DefectLogButton.Visible = false;
-
-            }
-            else
-            {
-                _TimeLogButton.Visible = true;
-                _DefectLogButton.Visible = true;
-                projectTaskListComboBox.Enabled = true;                          
-            }
-        }
-
-        /// <summary>
-        /// Update UI Controls
-        /// </summary>
-        /// <param name="bState">Property State</param>
-        private void UpdateTimerControls(bool bState)
-        {
-            //Check the State Information
-            if (bState == false)
-            {
-                //Update the Button States
-                _playButton.Enabled = false;
-                _pauseButton.Enabled = false;
-                _finishButton.Enabled = false;
-                _defectButton.Enabled = false;
-                             
-            }
-            else
-            {
-                //Update the Button States
-                _playButton.Enabled = true;
-                _pauseButton.Enabled = true;
-                _finishButton.Enabled = true;
-            }
-        }
-
-        /// <summary>
-        /// Update the Button States Once the Task is Changed From The Task List
-        /// </summary>
-        private async void ClearAndUpdateTimersStateOnSelectionChange()
+        private async void RetrieveTaskListForActiveProject()
         {
             try
             {
-                //Get the Timer State
-                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
+                // Contact the dashboard and get the list of tasks for the active project
+                DashboardProject thisProject = _activeProject;
+                ProjectTaskListApiResponse projectTaskInfo = await _pDashAPI.GetProjectTaskList(thisProject.Id);
 
-                //Check the Timer Response
-                if (timerResponse != null)
+                // make sure the active project didn't change while we were "awaiting" the response
+                if (projectTaskInfo != null && IsActiveProject(thisProject))
                 {
-                    if(timerResponse.Timer.ActiveTask !=null)
-                    {
-                        //Set the Current Active Task
-                        _currentActiveTaskInfo = timerResponse.Timer.ActiveTask;
-                    }                   
+                    // Discard any previous task list data
+                    _activeProjectTaskList.Clear();
+                    _activeProjectTaskNameList.Clear();
 
-                    //Based on the State of the Timer State, Set the Play and Pause Button
-                    if (timerResponse.Timer.Timing == true)
+                    // add the new tasks to the list
+                    foreach (var item in projectTaskInfo.ProjectTasks)
                     {
-                        _pauseButton.Checked = false;
-                        _playButton.Checked = true;
-                        _playButton.Enabled = true;                       
+                        item.Project = projectTaskInfo.ForProject;
+                        _activeProjectTaskList.Add(item);
+                        _activeProjectTaskNameList.Add(item.FullName);
                     }
-                    else
-                    {
-                       
-                        _pauseButton.Checked = true;
-                        _playButton.Checked = false;
-                        _playButton.Enabled = true;
-                    }
-
-                    //Update the Defect Button State
-                    UpdateDefectButtonState(timerResponse.Timer.DefectsAllowed);
                 }
-
             }
             catch (Exception ex)
             {
-                //Handle the Exception
-                Console.WriteLine(ex.ToString());
-
-                //Update the UI Controls
-                UpdateUIControls(false);
-            }
+                TransitionToDisconnectedState(ex);
+            }            
         }
 
         /// <summary>
-        /// Get the Current Task Once Project Changes and Set the Same 
+        /// Alter internal state and the UI to indicate that we are no longer connected to the dashboard
         /// </summary>
-        private async void GetAndSetCurrentActiveTaskOnProjectChange()
-        {           
-            try
-            {
-                string strCurrentTask = string.Empty;
-              
-                //Get the Timer State
-                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
-
-                //Check the Timer Response
-                if (timerResponse != null && timerResponse.Timer.ActiveTask !=null)
-                {
-                    //Get the Current Task Full Name
-                    strCurrentTask = timerResponse.Timer.ActiveTask.FullName;
-
-                    //Current Active Task Information
-                    _currentActiveTaskInfo = timerResponse.Timer.ActiveTask;
-
-                    //Set the Current Active Task On Project Change
-                    SetCurrentActiveTaskAndUpdateUIOnProjectChange(strCurrentTask);
-
-                    //Update the Defect Button State
-                    UpdateDefectButtonState(timerResponse.Timer.DefectsAllowed);
-                }
-
-            }
-            catch (Exception ex)
-            {
-                //Handle the Exception
-                Console.WriteLine(ex.ToString());
-                
-            }
-
-        }
-
-        /// <summary>
-        /// Set the Current Active Task and Update the UI.
-        /// This will Happen Automatically once User Changes the Project Details from the Combo Box
-        /// </summary>
-        /// <param name="strCurrentTaskName">Current Task Name</param>
-        private void SetCurrentActiveTaskAndUpdateUIOnProjectChange(string strCurrentTaskName)
+        /// <param name="ex"></param>
+        private void TransitionToDisconnectedState(Exception ex)
         {
-            //Current Task Choice
-            _currentTaskChoice = strCurrentTaskName;
+            if (ex != null)
+            {
+                Console.WriteLine(ex.ToString());
+            }
 
-            //Update the Timer Controls
-            UpdateTimerControls(true);
+            _activeProject = null;
+            _activeTask = null;
+            IsProcessDashboardRunning = false;
 
-            //Update the Button State Based on the Timer Status
-            ClearAndUpdateTimersStateOnSelectionChange();
+            DisableControls(_noConnectionState);
         }
 
         /// <summary>
-        /// Update the Finish Button State
+        /// Make all controls disabled except the project combo box, and display a message there
         /// </summary>
-        /// <param name="bState">State</param>
-        private void UpdateFinishButtonState(bool bState)
+        /// <param name="messageToDisplay"></param>
+        private void DisableControls(String messageToDisplay)
         {
-            //Set the Status
-            if(bState == false)
-            {
-                //Update the Finish Button State
-                _finishButton.Text = "Not Finished";
-            }
-            else
-            {
-                //Update the Button State
-                _finishButton.Text = "Completed";
-                _finishButton.Enabled = true;
-            }
-            
+            // empty the project list, and display the given message
+            _projectList.Clear();
+            _projectNameList.Clear();
+            _projectNameToDisplay = messageToDisplay;
+            refreshCombo(_projectComboBox);
+
+            // empty the task list and display nothing. The task combo box must remain enabled momentarily
+            // so Visual Studio will query the new text to display.
+            _activeProjectTaskList.Clear();
+            _activeProjectTaskNameList.Clear();
+            _taskNameToDisplay = " ";
+            refreshCombo(_taskComboBox);
+
+            // disable the play/pause, defect, and finish buttons
+            _pauseButton.Enabled = false;
+            _pauseButton.Checked = false;
+            _playButton.Enabled = false;
+            _playButton.Checked = false;
+            _defectButton.Enabled = false;
+            _finishButton.Text = " ";
+            _finishButton.Enabled = false;
+
+            // disable the "Open" menu by clearing its contents
+            _timeLogButton.Visible = false;
+            _defectLogButton.Visible = false;
+            ClearCommandList();
         }
+
+        private void refreshCombo(OleMenuCommand comboBox)
+        {
+            // toggling the enablement of a combo box triggers VS to reload its value
+            comboBox.Enabled = false;
+            comboBox.Enabled = true;
+        }
+        
         #endregion
 
-        #region Start process and Sync Up with Timer
-
-        /// <summary>
-        /// Update the Details on Process Dashboad StartUp
-        /// </summary>
-        private void UpdateDetailsOnDashboardProcessStartUp()
-        {
-            //Select the Project Name to Empty
-            _currentSelectedProjectName = string.Empty;
-
-            //Get the Project Lidt from the Information
-            GetProjectListInformationOnStartup();
-
-            //Get the Selected Project Information
-            GetSelectedProjectInformationOnStartup();
-
-            //Get thh Active Task Resource List
-             GetActiveTaskResourcesList();
-
-            //Listen for Process Dashboard Events
-            ListenForProcessDashboardEvents();
-
-        }
-        /// <summary>
-        /// Start the Process Dashboard Process
-        /// </summary>
-        private void StartProcessDashboardProcess()
-        {
-            Process myProcess = new Process();
-
-            try
-            {
-                myProcess.StartInfo.UseShellExecute = false;
-                // You can start any process, HelloWorld is a do-nothing example.
-                myProcess.StartInfo.FileName = @"C:\Program Files (x86)\Process Dashboard\ProcessDashboard.exe";
-                myProcess.StartInfo.CreateNoWindow = false;
-                myProcess.Start();
-                // This code assumes the process you are starting will terminate itself. 
-                // Given that is is started without a window so you cannot terminate it 
-                // on the desktop, it must terminate itself or you can do it programmatically
-                // from this application using the Kill method.
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-        }
-        /// <summary>
-        /// Sync Up the Process Dashboard Once User Start Manually
-        /// </summary>
-        private void SyncUpProcessDashboardDataOnManualProcessStart()
-        {
-             //Get the Project Lidt from the Information
-            GetProjectListInformationOnStartup();
-         
-            //Check if the Process Dashboard is Running and Alive
-            if (IsProcessDashboardRunning == true)
-            {
-                UpdateDetailsOnDashboardProcessStartUp();
-            }
-            else
-            {
-                // Dialog box with two buttons: yes and no. [3]
-                DialogResult result = MessageBox.Show(_displayPDConnectionFailed, _displayPDConnectFailedTitle, MessageBoxButtons.OKCancel, MessageBoxIcon.None);
-
-                if (result == DialogResult.OK)
-                {
-                    //Get the Project Lidt from the Information
-                    GetProjectListInformationOnStartup();
-                   
-                    //Check if the Process Dashboard is Running and Alive
-                    if (IsProcessDashboardRunning == true)
-                    {
-                        UpdateDetailsOnDashboardProcessStartUp();
-                    }
-                }
-                
-            }
-        }
-
-        /// <summary>
-        /// Check if Process Dashboard is Running or not
-        /// </summary>
-        private async void CheckIfProcessDashboardIsRunning()
-        {
-            try
-            {
-                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
-
-                if (timerResponse != null)
-                {
-                    IsProcessDashboardRunning = true;
-                }
-            }
-            catch(Exception ex)
-            {
-                IsProcessDashboardRunning = false;
-                Console.WriteLine(ex.ToString());
-            }
-        }
-
-        /// <summary>
-        /// Dispose Interface for Disposing the Object
-        /// </summary>
-        public void Dispose()
-        {
-            
-        }                
-
-        #endregion
-
-       #region Event Setup
-
-    
-      
-        /// <summary>
-        /// Function to Process the Dashboard Event Sync
-        /// </summary>
-        private void ProcessDashboardEventSync()
-        {
-            //Start Listening for the Events
-            ListenForProcessDashboardEvents();
-        }
+        #region Logic relating to the Event listening loop
+        
         /// <summary>
         /// Listen for Process Dashboard Events through Rest API
         /// </summary>
@@ -1595,7 +917,7 @@ namespace Process_DashboardToolBar
                 return;
 
             _listening = true;
-            var errCount = 0;
+            int errCount = 0;
             while (errCount < 2)
             {
                 try
@@ -1617,58 +939,11 @@ namespace Process_DashboardToolBar
             }
             _listening = false;
 
-            //Update the Connection State to No Connection State
-            UpdateConnnectionState(false);
-
             // update UI controls to tell the user that the dashboard is 
             // no longer running.
-            UpdateUIControls(false);
+            TransitionToDisconnectedState(null);
         }
-
-
-        /// <summary>
-        /// Update the Connection State Based on Connection and Disconnection
-        /// </summary>
-        /// <param name="bState"></param>
-        private void UpdateConnnectionState(bool bState)
-        {
-            if (bState == true)
-            {
-
-            }
-            else
-            {
-                _currentSelectedProjectName = _noConnectionState;
-                _projectComboList.Enabled = true;
-                _activityComboList.Clear();
-                UpdateCurrentSelectedProject(_currentSelectedProjectName);
-                _currentTaskChoice = "";
-                _activityTaskList.Clear();
-                _activeProjectList.Clear();
-                UpdateTaskDisconnectState(_currentTaskChoice);
-                IsProcessDashboardRunning = false;
-            }
-        }
-
-        /// <summary>
-        /// Manage updating the Task ListInformation
-        /// Keeps most recently searched for item at the top of the list.
-        /// </summary>
-        /// <param name="listItem">Work item to add to the list or move to top of the list.</param>
-        private void UpdateTaskDisconnectState(string currentTask)
-        {
-            // If the current item is in the list, remove and add at the top
-            if (_activityTaskList.Contains(currentTask))
-            {
-                _activityTaskList.Remove(currentTask);
-            }
-
-            projectTaskListComboBox.Enabled = true;          
-            _activityTaskList.Insert(0, _currentTaskChoice);                 
-
-        }
-
-
+        
         /// <summary>
         /// Function Callback for Handling the Process Dashboard Sync Events
         /// </summary>
@@ -1680,46 +955,41 @@ namespace Process_DashboardToolBar
             switch (evt.Type)
             {
                 case "timer":
-                    // update the play/pause state   
-                    UpdateTheButtonStateOnButtonCommandClick();
+                case "activeTask":
+                    ResyncUserInterfaceToExternalTimerState(true);
                     break;
                                         
                 case "taskData":
-                    // refresh the state of the "Completed" button, just in case
-                    UpdateTheButtonStateOnButtonCommandClick();
+                    // refresh the state of the "Completed" button if it changed
+                    SyncFinishButtonState(evt.Task);
                     break;
 
                 case "hierarchy":
                     // update the list of known projects, and the tasks 
                     // within the current project
-                    ProcessSetActiveProcessIDBasedOnProjectStat(true);
-                    ProcessSetActiveTaskIDBasedOnProjectStat(true);
-                 
-                    break;
-
-                case "activeTask":
-                    // update the currently selected project and task
-                      ProcessSetActiveProcessIDBasedOnProjectStat(false);
-                      ProcessSetActiveTaskIDBasedOnProjectStat(false);                    
+                    RetrieveProjectList();
+                    RetrieveTaskListForActiveProject();
                     break;
 
                 case "taskList":
                     // update the list of tasks within the current project
-                    ProcessSetActiveTaskIDBasedOnProjectStat(true);                
+                    RetrieveTaskListForActiveProject();
                     break;
+
                 case "notifications":
+                    // no handling of notifications within VS at this time
                     break;
+
                 default:
                     break;
             }
 
             Console.WriteLine("[HandleProcessDashboardSyncEvents] Data Modified in Process Dashboard = {0}\n", evt.Type.ToString());
         }
-
-
+        
         #endregion
 
-        #region Defect Windows Setup
+        #region Logic to open various Windows
 
         /// <summary>
         /// Display the Defect Dialog
@@ -1775,6 +1045,107 @@ namespace Process_DashboardToolBar
                 Console.WriteLine(ex.ToString());
             }
         }
+        
+        #endregion
+
+        #region Logic to handle trigger resources and their responses
+        
+        /// <summary>
+        /// Ask the dashboard to execute a trigger resource, and handle the response
+        /// </summary>
+        private async void RunTriggerResource(DashboardResource triggerResource)
+        {
+            try
+            {
+                //Check if the Resource ID is NULL and the Task resource ID 
+                if (triggerResource != null && triggerResource.Uri.Length > 0)
+                {
+                    // ask the dashboard to run the trigger
+                    TriggerApiResponse triggerResponse = await _pDashAPI.RunTrigger(triggerResource.Uri);
+
+                    //Handle the Trigger Response
+                    HandleTriggerResponse(triggerResponse);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Handle a Trigger Reponse received from the dashboard
+        /// </summary>
+        /// <param name="response">Trigger Response Object</param>
+        private void HandleTriggerResponse(TriggerApiResponse response)
+        {
+            try
+            {
+                if (response == null)
+                {
+                    // no response? do nothing
+                }
+                else if (response.Window != null)
+                {
+                    // bring window to the front, and center it
+                    RaiseAndCenterWindow(response.Window);
+                }
+                else if (response.Message != null)
+                {
+                    // display a message to the user
+                    System.Windows.Forms.MessageBox.Show(response.Message.Body, response.Message.Title, MessageBoxButtons.OK);
+                }
+                else if (response.Redirect != null)
+                {
+                    // open the redirect URI in a web browser tab
+                    DisplayReportInEmbeddedWebBrowser(response.Redirect);
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.ToString());         
+            }
+        }
+
+        /// <summary>
+        /// Open a web browser tab to display a report with a given URL
+        /// </summary>
+        /// <param name="reportURL">Report URL</param>
+        private void DisplayReportInEmbeddedWebBrowser(string reportURL)
+        {
+            try
+            {
+                //Get the Service From the Browsing Engine from the Visual Studio
+                var service = Package.GetGlobalService(typeof(SVsWebBrowsingService)) as IVsWebBrowsingService;
+
+                if (service != null && reportURL.Length > 0)
+                {
+                    string strFullURL;
+                    if (reportURL.StartsWith("http"))
+                        strFullURL = reportURL;
+                    else
+                        strFullURL = "http://localhost:2468" + reportURL;
+                    //Window Frame Object
+                    IVsWindowFrame pFrame = null;
+                    var filePath = strFullURL;
+
+                    //Navigate to the URL with the Frame
+                    service.Navigate(filePath, (uint)__VSWBNAVIGATEFLAGS.VSNWB_WebURLOnly, out pFrame);
+
+                    if (pFrame != null)
+                    {
+                        //Display the Window Inside Visual Studio
+                        pFrame.Show();
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+
+        }
 
         /// <summary>
         /// Bring a window to the front, and center it
@@ -1787,7 +1158,7 @@ namespace Process_DashboardToolBar
                 IntPtr handle = (IntPtr)window.Id;
 
                 // if the window handle was missing, try to look it up from the window title
-                if (handle == IntPtr.Zero && window.Title != null && window.Title != "")
+                if (handle == IntPtr.Zero && !string.IsNullOrEmpty(window.Title))
                 {
                     handle = FindWindow(null, window.Title);
                 }
@@ -1829,141 +1200,63 @@ namespace Process_DashboardToolBar
                 }
             }
 
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 //Handle the Exception
                 Console.WriteLine(ex.ToString());
-            }       
-           
-        }
+            }
 
+        }
 
         #endregion
 
-        #region Report Section
+        #region Setup and event handling for task resources
 
         /// <summary>
         /// Get the Projct Task Resource List
         /// Rest API call will Process Dashboard to Get the Data 
         /// </summary>
-        private async void GetActiveTaskResourcesList()
+        private async void RetrieveResourceListForActiveTask()
         {
             try
             {
-                //Get the Timer State
-                TimerApiResponse timerResponse = await _pDashAPI.GetTimerState();
+                // contact the dashboard and retrieve the list of resources for the active task
+                DashboardTask thisTask = _activeTask;
+                TaskResourcesApiResponse taskResourceInfo = await _pDashAPI.GetTaskResourcesList(thisTask.Id);
 
-                //Check the Timer Response
-                if (timerResponse != null && timerResponse.Timer.ActiveTask != null)
+                if (taskResourceInfo != null && IsActiveTask(thisTask))
                 {
-                    TaskResourcesApiResponse taskResourceInfo = await _pDashAPI.GetTaskResourcesList(timerResponse.Timer.ActiveTask.Id);
+                    // Discard previous task resources
+                    _activeTaskResourceList.Clear();
 
-                    if (taskResourceInfo != null)
-                    {
-                        //Clear the List
-                        _activeTaskResourceList.Clear();
-
-                        //Add the Project and Items in a List
-                        foreach (var item in taskResourceInfo.Resources)
-                        {
-                            //Add the Items in the List
-                            _activeTaskResourceList.Add(item);
-                        }
-                    }
+                    // add the resources to our list
+                    _activeTaskResourceList.AddRange(taskResourceInfo.Resources);
 
                     //Process the Task Resource Menu Items
-                    ProcessTasKResourceMenuItems();
-
-                    //Update the Defect button State
-                    UpdateDefectButtonState(timerResponse.Timer.DefectsAllowed);
-
+                    CreateOleMenuCommandsForTaskResources();
                 }
-
             }
-
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
             }
-
-        }
-        /// <summary>
-        /// Get Selected Project Information on Startup
-        /// </summary>
-        /// 
-        /// <summary>
-        /// Handle the Trigger Reponse 
-        /// </summary>
-        /// <param name="response">Trigger Response Object</param>
-        private void HandleTriggerResponse(TriggerApiResponse response)
-        {
-            try
-            {
-                if (response == null)
-                {
-                    // no response? do nothing
-                }
-                else if (response.Window != null)
-                {
-                    // bring window to the front, and center it
-                    RaiseAndCenterWindow(response.Window);
-                }
-                else if (response.Message != null)
-                {
-                    // display a message to the user
-                    System.Windows.Forms.MessageBox.Show(response.Message.Body, response.Message.Title, MessageBoxButtons.OK);
-                }
-                else if (response.Redirect != null)
-                {
-                    // open the redirect URI in a web browser tab
-                    DisplayReportInWebBrowser(response.Redirect);
-                }
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.ToString());         
-            }
-          
         }
 
-        /// <summary>
-        /// Shows the tool window when the menu item is clicked.
-        /// </summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event args.</param>
-        private void ShowToolWindow()
-        {
-            // Get the instance number 0 of this tool window. This window is single instance so this instance
-            // is actually the only one.
-            // The last flag is set to true so that if the tool window does not exists it will be created.
-            ToolWindowPane window = FindToolWindow(typeof(ProcessDashboardToolWindow), 0, true);
-            if ((null == window) || (null == window.Frame))
-            {
-                throw new NotSupportedException("Cannot create tool window");
-            }
-
-            IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
-            Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
-        }
-        
         /// <summary>
         /// Update the Task Resource Menu Items
         /// </summary>
-        private void ProcessTasKResourceMenuItems()
+        private void CreateOleMenuCommandsForTaskResources()
         {
             try
             {
                 //Clear the Command List from Existing List
                 ClearCommandList();
 
-                // if resources are present, defect logging is probably allowed
-                _defectButton.Enabled = _activeTaskResourceList.Count > 0;
-
                 //Get the Service from Ole Menu Command Service
                 var mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
 
                 //Check for NULL
-                if (null == mcs && _activeTaskResourceList.Count == 0)
+                if (null == mcs || _activeTaskResourceList.Count == 0)
                     return;
 
                 //Prepare the Command Handlers
@@ -1978,83 +1271,13 @@ namespace Process_DashboardToolBar
 
                     //Add the Command to the Queue
                     mcs.AddCommand(mc);
-                    _oldTaskResourceList.Add(mc);
-                }              
-
-            }
-
-
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-           
-        }
-
-        /// <summary>
-        /// Get the Time Log Resource Query Items
-        /// </summary>
-        /// <param name="sender">Command Sender</param>
-        /// <param name="e">Event Argument</param>
-        private void OnTaskMenuTimeLogResourceQueryItem(object sender, EventArgs e)
-        {
-            try
-            {
-                OleMenuCommand menuCommand = sender as OleMenuCommand;
-                if (null != menuCommand)
-                {
-                    menuCommand.Text = _timeLogMenu;
-                    menuCommand.Visible = true;                    
+                    _oleTaskResourceList.Add(mc);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
             }
-
-        }
-
-        /// <summary>
-        /// Update the Time Log Resource Query Execution
-        /// </summary>
-        /// <param name="sender">Command Sender</param>
-        /// <param name="e">Event Argument</param>
-        private void OnTaskTimeLogResourceQueryExecution(object sender, EventArgs e)
-        {
-             DisplayTimeLogWindow();
-        }
-
-        /// <summary>
-        /// Get the Defect Log Resource Query Items
-        /// </summary>
-        /// <param name="sender">Command Sender</param>
-        /// <param name="e">Event Argument</param>
-        private void OnTaskMenuDefectLogResourceQueryItem(object sender, EventArgs e)
-        {
-            try
-            {
-                OleMenuCommand menuCommand = sender as OleMenuCommand;
-                if (null != menuCommand)
-                {
-                    menuCommand.Text = _defectLogMenu;
-                    menuCommand.Visible = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-
-        }
-
-        /// <summary>
-        /// Update the Defect Log Resource Query Execution
-        /// </summary>
-        /// <param name="sender">Command Sender</param>
-        /// <param name="e">Event Argument</param>
-        private void OnTaskDefectLogResourceQueryExecution(object sender, EventArgs e)
-        {
-            DisplayDefectLogWindow();
         }
 
         /// <summary>
@@ -2064,13 +1287,13 @@ namespace Process_DashboardToolBar
         {
             try
             {
-                if (_oldTaskResourceList.Count > 0)
+                if (_oleTaskResourceList.Count > 0)
                 {
                     //Get the Service from Ole Menu Command Service
                     var mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
 
                     //Iterate through Each Item 
-                    foreach (var item in _oldTaskResourceList)
+                    foreach (var item in _oleTaskResourceList)
                     {
                         if (mcs != null && item != null)
                         {
@@ -2079,7 +1302,7 @@ namespace Process_DashboardToolBar
                         }
                     }
 
-                    _oldTaskResourceList.Clear();
+                    _oleTaskResourceList.Clear();
                 }
             }
             catch(Exception ex)
@@ -2141,7 +1364,7 @@ namespace Process_DashboardToolBar
                         }
                         else
                         {
-                            DisplayReportInWebBrowser(resource.Uri);
+                            DisplayReportInEmbeddedWebBrowser(resource.Uri);
                         }
                     }
                 }
@@ -2153,121 +1376,9 @@ namespace Process_DashboardToolBar
          
         }
 
-        /// <summary>
-        /// Process the Task Report on Task Resource Change 
-        /// </summary>
-        /// <param name="reportURL">Report URL</param>
-        private void DisplayReportInWebBrowser(string reportURL)
-        {
-            try
-            {
-                //Get the Service From the Browsing Engine from the Visual Studio
-                var service = Package.GetGlobalService(typeof(SVsWebBrowsingService)) as IVsWebBrowsingService;
-
-                if (service != null && reportURL.Length > 0)
-                {
-                    string strFullURL;
-                    if (reportURL.StartsWith("http"))
-                        strFullURL = reportURL;
-                    else
-                        strFullURL = "http://localhost:2468" + reportURL;
-                    //Window Frame Object
-                    IVsWindowFrame pFrame = null;
-                    var filePath = strFullURL;
-
-                    //Navigate to the URL with the Frame
-                    service.Navigate(filePath, (uint)__VSWBNAVIGATEFLAGS.VSNWB_WebURLOnly, out pFrame);
-
-                    if (pFrame != null)
-                    {
-                        //Display the Window Inside Visual Studio
-                        pFrame.Show();
-                    }
-
-                }
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }          
-           
-        }
-
-        /// <summary>
-        /// Get the Report Based on the Selected Task Resource URI
-        /// </summary>
-        private async void RunTriggerResource(DashboardResource triggerResource)
-        {
-            try
-            {
-                //Check if the Resource ID is NULL and the Task resource ID 
-               if (triggerResource != null && triggerResource.Uri.Length > 0)
-                {
-                    TriggerApiResponse resTriggerResponse = await _pDashAPI.RunTrigger(triggerResource.Uri);
-
-                    if (resTriggerResponse != null)
-                    {
-                        //Handle the Trigger Reponse
-                        HandleTriggerResponse(resTriggerResponse);
-                    }                   
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());                
-            }
-        }
-
-        /// <summary>
-        /// Update the Defect Button State 
-        /// </summary>
-        /// <param name="bState"></param>
-        private void UpdateDefectButtonState(bool bState)
-        {
-            _defectButton.Enabled = bState;
-        }
-
         #endregion
 
         #region Properties
-
-        /// <summary>
-        /// Property to Set and Get the Finish Button State
-        /// </summary>
-        public bool FinishButtonState
-        {
-            get { return _finishButtonStatus; }
-            set { _finishButtonStatus = value; }
-        }
-
-        /// <summary>
-        /// Property to Set and Get the Play Button State
-        /// </summary>
-        public bool PlayButtonState
-        {
-            get { return _playButtonState; }
-            set { _playButtonState = value; }
-        }
-
-
-        /// <summary>
-        /// Property to Set and Get the Pause Button State
-        /// </summary>
-        public bool PauseButtonState
-        {
-            get { return _pauseButtonState; }
-            set { _pauseButtonState = value; }
-        }
-
-        /// <summary>
-        /// Property to Set and Get the Current Combo Choice
-        /// </summary>
-        public string CurrentComboBoxChoice
-        {
-            get { return _currentSelectedProjectName; }
-            set { _currentSelectedProjectName = value; }
-        }
 
         /// <summary>
         /// Property to Get and Set If the Process Dashboard is Running or Not
@@ -2277,21 +1388,11 @@ namespace Process_DashboardToolBar
             get { return _processDashboardRunStatus; }
             set { _processDashboardRunStatus = value; }
         }
-
-
-        /// <summary>
-        /// Property to Get and Set If Reset Event Need to be Handled or Not
-        /// </summary>
-        public bool HandlingResetEvent
-        {
-            get { return _handlingRestEvent; }
-            set { _handlingRestEvent = value; }
-        }
-
         
         #endregion
 
-        #region Private Variables        
+        #region Private Variables
+              
         /// <summary>
         /// Play Button Ole Menu Command
         /// </summary>
@@ -2313,61 +1414,54 @@ namespace Process_DashboardToolBar
         private OleMenuCommand _defectButton;
 
         /// <summary>
-        /// Report Button Menu Command
-        /// </summary>
-        private OleMenuCommand _reportButton;
-
-        /// <summary>
-        /// a
+        /// Open Button Ole Menu Command
         /// </summary>
         private OleMenuCommand _openButton;
 
         /// <summary>
         /// Report List Button
         /// </summary>
-        private OleMenuCommand _ReportListButton;
+        private OleMenuCommand _reportListButton;
 
         /// <summary>
-        /// Project Combo List
+        /// The Combo Box that displays the name of the selected project
         /// </summary>
-        private OleMenuCommand _projectComboList;
+        private OleMenuCommand _projectComboBox;
 
         /// <summary>
-        /// Project Task Combo List
+        /// The Combo Box that displays the name of the selected task
         /// </summary>
-        private OleMenuCommand projectTaskListComboBox;
-
-
+        private OleMenuCommand _taskComboBox;
+        
         /// <summary>
         /// Time Log Button
         /// </summary>
-        private OleMenuCommand _TimeLogButton;
-
-
+        private OleMenuCommand _timeLogButton;
+        
         /// <summary>
         /// Defect Log Button
         /// </summary>
-        private OleMenuCommand _DefectLogButton;
+        private OleMenuCommand _defectLogButton;
 
         /// <summary>
-        /// Activity Task Combo List
+        /// List of the Projects known to this dashboard
         /// </summary>
-        private List<string> _activityComboList;
+        private List<DashboardProject> _projectList;
 
         /// <summary>
-        /// Task Combo List
+        /// List of the names of known projects
         /// </summary>
-        private List<string> _activityTaskList;
+        private List<string> _projectNameList;
 
         /// <summary>
-        /// Active Project Task List
-        /// </summary>
-        private List<DashboardProject> _activeProjectList;
-
-        /// <summary>
-        /// Active Project Task List [Project Task Inside the Process]
+        /// List of the tasks within the Active Project
         /// </summary>
         private List<DashboardTask> _activeProjectTaskList;
+
+        /// <summary>
+        /// List of the names of tasks within the currently selected project
+        /// </summary>
+        private List<string> _activeProjectTaskNameList;
 
         /// <summary>
         /// Active Project Task Resource List
@@ -2375,62 +1469,30 @@ namespace Process_DashboardToolBar
         private List<DashboardResource> _activeTaskResourceList;
 
         /// <summary>
-        /// Old Task Resource List for the Menu Item
+        /// OLE objects respresenting each of the Task Resource Menu Items
         /// </summary>
-        private List<OleMenuCommand> _oldTaskResourceList;
-
-        /// <summary>
-        /// Finish Button State
-        /// </summary>
-        private bool _finishButtonStatus;
-
-        /// <summary>
-        /// Pause Button State
-        /// </summary>
-        private bool _pauseButtonState;
-
-        /// <summary>
-        /// Play Button State
-        /// </summary>
-        private bool _playButtonState;
+        private List<OleMenuCommand> _oleTaskResourceList;
        
         /// <summary>
-        /// Current Selected Project Name
+        /// The name that should be displayed in the Project Combo Box
         /// </summary>
-        private string _currentSelectedProjectName;
+        private string _projectNameToDisplay;
 
         /// <summary>
-        /// Current Task Choice
+        /// The name that should be displayed in the Task Combo Box
         /// </summary>
-        private string _currentTaskChoice;
-
-        //Current Active Task Information
-        private DashboardTask _currentActiveTaskInfo;
-
+        private string _taskNameToDisplay;
 
         /// <summary>
-        /// Display Message If the Process Dashboard is Not Running
+        /// The currently active project
         /// </summary>
-        private string _displayPDIsNotRunning = "Process Dashboard is not Running. Please Start the Process Dashboard Process";
+        private DashboardProject _activeProject;
 
         /// <summary>
-        /// Display Message that need to be Displayed for Error Related Information
+        /// The currently active task
         /// </summary>
-        private string _displayPDStartRequired = "Visual Studio is Not Currently Connected to the Process Dashboard.\n Please start your personal Process Dashboard if it is not aleady running. Than click OK to connect Visual Studio to dashboard";
-
-        /// <summary>
-        /// Failed Connection Messsage Title
-        /// </summary>
-        private string _displayPDConnectFailedTitle = "Could not Connect to the Process Dashboard";
-        /// <summary>
-        /// Message to be Displayed for Connection Failed
-        /// </summary>
-        private string _displayPDConnectionFailed = "Visual Studio attemted to Connect to the Process Dashboard, but the Connection was unsuccessfull.\n If the Process Dashboard is running, please close and reopen it. Otherwise, please start the dashboard and Click OK to connect to Visual Studio";
-        /// <summary>
-        /// Display for the Error Message Related to Message Title
-        /// </summary>
-        private string _displayPDStartMsgTitle = "Not Connected to Process Dashboard";
-
+        private DashboardTask _activeTask;
+        
         /// <summary>
         /// Process Dashboard Running Status
         /// </summary>
@@ -2452,9 +1514,9 @@ namespace Process_DashboardToolBar
         private int _maxEventID = 0;
 
         /// <summary>
-        ///  Variable to Get and Set If Reset Event Need to be Handled or Not
+        /// The moment in time when we last initiated a change in timing state
         /// </summary>
-        private bool _handlingRestEvent = false;
+        private DateTime _lastLocalTimerChange;
 
         /// <summary>
         /// Command MRU List Data
@@ -2466,26 +1528,41 @@ namespace Process_DashboardToolBar
         /// </summary>
         private int baseMRUID = (int)cmdidMRUList;
 
-        /// <summary>
-        /// Time Log Menu
-        /// </summary>
-        private string _timeLogMenu = "Time Log";
+        #endregion
 
-
-        /// <summary>
-        /// Defect Log Menu
-        /// </summary>
-        private string _defectLogMenu = "Defect Log";
+        #region Messages for display to the user
 
         /// <summary>
         /// No Task Present Messsage
         /// </summary>
-        private string _noTaskPresent = "(No Task Present)";
+        private const string _noTasksPresent = "(No Tasks Present)";
 
         /// <summary>
         /// No Connection State
         /// </summary>
-        private string _noConnectionState = "NO CONNECTION";
+        private const string _noConnectionState = "NO CONNECTION";
+
+        private const string _connectingMessage = "Connecting...";
+
+        /// <summary>
+        /// Not Connected Messsage Title
+        /// </summary>
+        private const string _displayPDStartMsgTitle = "Not Connected to Process Dashboard";
+
+        /// <summary>
+        /// Message to be Displayed asking the user to start the dashboard
+        /// </summary>
+        private const string _displayPDStartRequired = "Visual Studio is not currently connected to the Process Dashboard.\n \nPlease start your personal Process Dashboard if it is not aleady running. Than click OK to connect Visual Studio to the dashboard.\n \nIf you do not wish to connect Visual Studio to the dashboard, click Cancel.";
+
+        /// <summary>
+        /// Failed Connection Messsage Title
+        /// </summary>
+        private const string _displayPDConnectFailedTitle = "Could Not Connect to the Process Dashboard";
+
+        /// <summary>
+        /// Message to be Displayed for Connection Failed
+        /// </summary>
+        private const string _displayPDConnectionFailed = "Visual Studio attempted to connect to the Process Dashboard, but the connection was unsuccessful.\n \nIf the Process Dashboard is running, please close and reopen it. Otherwise, please start the dashboard, then click OK to connect to Visual Studio.\n \nIf you do not wish to connect Visual Studio to the dashboard, click Cancel.";
 
         #endregion
     }

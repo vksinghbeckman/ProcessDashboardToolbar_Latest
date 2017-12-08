@@ -22,8 +22,8 @@ namespace Process_DashboardToolBar
         public string FullName { get; set; }
         public DashboardProject Project { get; set; }
         public DateTime? CompletionDate { get; set; }
-        public double EstimatedTime { get; set; }
-        public double ActualTime { get; set; }
+        public double? EstimatedTime { get; set; }
+        public double? ActualTime { get; set; }
     }
 
     public class DashboardResource
@@ -38,6 +38,7 @@ namespace Process_DashboardToolBar
     {
         public int Id { get; set; }
         public string Type { get; set; }
+        public DashboardTask Task { get; set; }
     }
 
     #endregion
