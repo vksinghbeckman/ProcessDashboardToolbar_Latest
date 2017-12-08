@@ -178,22 +178,21 @@
         
     <Combos>
 
-      <Combo guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidTask" priority="0x10" type="DropDownCombo" idCommandList="cmdidTaskList" defaultWidth="200">
+      <Combo guid="guidProcessDashboardCommandPackageCmdSet" id="cmdidTask" priority="0x10" type="DropDownCombo" idCommandList="cmdidTaskList" defaultWidth="150">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
-        <CommandFlag>StretchHorizontally</CommandFlag>
         <Strings>
-          <CommandName>Task</CommandName>
-          <ToolTipText>Select the Project from the List</ToolTipText>
+          <CommandName>Project</CommandName>
+          <ToolTipText>Select a Project</ToolTipText>
           <ButtonText>Enter the Task Description</ButtonText>
         </Strings>
       </Combo>
       
-      <Combo guid="guidProcessDashboardCommandPackageCmdSet" id="cmdProjectDetails" priority="0x20" type="DropDownCombo" idCommandList="cmdidProjectList" defaultWidth="300">
+      <Combo guid="guidProcessDashboardCommandPackageCmdSet" id="cmdProjectDetails" priority="0x20" type="DropDownCombo" idCommandList="cmdidProjectList" defaultWidth="350">
         <Parent guid="guidProcessDashboardCommandPackageCmdSet" id="ProcessDashboardMenuGroup" />
         <CommandFlag>StretchHorizontally</CommandFlag>
         <Strings>
-          <CommandName>Project</CommandName>
-          <ToolTipText>Select the Task From the Project</ToolTipText>
+          <CommandName>Task</CommandName>
+          <ToolTipText>Select a Task From the Project</ToolTipText>
           <ButtonText>Enter the Project Description</ButtonText>
         </Strings>
       </Combo>

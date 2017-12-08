@@ -151,6 +151,9 @@ namespace Process_DashboardToolBar
             //Initialize the Rest API Services
             InitializeRestAPIServices();
 
+            //Retrieve the font used for our toolbar
+            InitializeComponentFontData();
+
             //Initialize the Command Handlers
             InitializeCommandHandlers();
 
@@ -168,6 +171,21 @@ namespace Process_DashboardToolBar
         {
             //Initialize the Rest API Services for Dash API
             _pDashAPI = RestService.For<IPDashAPI>("http://localhost:2468/");
+        }
+
+        private void InitializeComponentFontData()
+        {
+            var uiHostLocale = GetService(typeof(IUIHostLocale)) as IUIHostLocale;
+            if (uiHostLocale != null)
+            {
+                var dlgFont = new UIDLGLOGFONT[] { new UIDLGLOGFONT() };
+                uiHostLocale.GetDialogFont(dlgFont);
+                _taskDisplayFont = Font.FromLogFont(dlgFont[0]);
+            }
+            else
+            {
+                _taskDisplayFont = null;
+            }
         }
 
         /// <summary>
@@ -560,7 +578,7 @@ namespace Process_DashboardToolBar
             if (newTask != null)
             {
                 // eagerly update the text we display in the combo box to appear responsive
-                _taskNameToDisplay = newTask.FullName;
+                _taskNameToDisplay = AbbreviateLongTaskName(newTask.FullName);
 
                 // now ask the dashboard to make this item the active task
                 ChangeTimerState("activeTaskId", newTask.Id);
@@ -661,7 +679,7 @@ namespace Process_DashboardToolBar
                 // if the active task has no full name, it represents the root of an
                 // empty project. Display a "no tasks" message.
                 _taskNameToDisplay = _noTasksPresent;
-                
+
                 // clear the list of items in the task combo box, since this project
                 // doesn't contain any tasks
                 _activeProjectTaskList.Clear();
@@ -673,7 +691,7 @@ namespace Process_DashboardToolBar
             else
             {
                 // display the name of the new task
-                _taskNameToDisplay = newActiveTask.FullName;
+                _taskNameToDisplay = AbbreviateLongTaskName(newActiveTask.FullName);
 
                 // if the project has changed, update the list of tasks in the project
                 if (IsActiveProject(newActiveTask.Project) == false)
@@ -739,6 +757,80 @@ namespace Process_DashboardToolBar
         private void SetFinishButtonText(bool completed)
         {
             _finishButton.Text = (completed ? "Completed" : "Not Finished");
+        }
+
+        /// <summary>
+        /// Calculate whether a task name will fit in the task selection combo box.
+        /// If not, return an abbreviated string that will fit.
+        /// </summary>
+        private String AbbreviateLongTaskName(String taskName)
+        {
+            try
+            {
+                // if we were not able to load font information, don't attempt abbreviation.
+                // if the entire task name fits in the available space, return it unmodified
+                if (_taskDisplayFont == null || TaskNameFits(taskName))
+                {
+                    return taskName;
+                }
+
+                // split the task name into parts based on the path separator. If it only
+                // contains one part, return it unchanged
+                string[] parts = taskName.Split(new[] { '/' });
+                if (parts.Length < 2)
+                {
+                    return taskName;
+                }
+
+                // the final portions of a path are generally the most contextually relevant.
+                // See how many of those we can fit into a string before we run out of space.
+                string result = parts[parts.Length - 1];
+                int startPos = parts.Length - 2;
+                while (startPos > 0)
+                {
+                    string oneResult = parts[startPos] + "/" + result;
+                    if (TaskNameFits(oneResult))
+                    {
+                        result = oneResult;
+                        startPos--;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                // at this point, we know that "result" will fit in the available space; but
+                // that we'll run out of space if we prepend "parts[startPos]". See how many
+                // characters of the initial part we can get away with.
+                string longestFittingResult = ".../" + result;
+                string firstPart = parts[startPos];
+                for (int numChars = 1; numChars <= firstPart.Length; numChars++)
+                {
+                    string oneResult = firstPart.Substring(0, numChars) + ".../" + result;
+                    if (TaskNameFits(oneResult))
+                    {
+                        longestFittingResult = oneResult;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                return longestFittingResult;
+            }
+            catch (Exception ex)
+            {
+                // if any problems occur in the logic above, return the unmodified task name.
+                Console.WriteLine(ex.ToString());
+                return taskName;
+            }
+        }
+
+        private bool TaskNameFits(string textToDisplay)
+        {
+            Size stringSize = TextRenderer.MeasureText(textToDisplay, _taskDisplayFont);
+            return (stringSize.Width <= _taskDisplayWidth);
         }
 
         private bool IsActiveTask(DashboardTask t)
@@ -1542,6 +1634,16 @@ namespace Process_DashboardToolBar
         /// Dash API object To Get Information from System
         /// </summary>
         IPDashAPI _pDashAPI = null;
+
+        /// <summary>
+        /// The font that is used to draw task names in our combo boxes
+        /// </summary>
+        private Font _taskDisplayFont = null;
+
+        /// <summary>
+        /// The number of pixels we have for displaying the name of the active task
+        /// </summary>
+        private int _taskDisplayWidth = 335;
 
         /// <summary>
         ///  For Events Multiple
