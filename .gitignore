@@ -1,3 +1,6 @@
 .vs/
 Process DashboardToolBar/bin/
 Process DashboardToolBar/obj/
+/ProcessDashboardVSExntensionInstaller/obj/Debug
+/ProcessDashboardVSExntensionInstaller/bin/Debug
+/bin

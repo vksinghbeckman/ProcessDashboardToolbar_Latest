@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:VSExtension="http://schemas.microsoft.com/wix/VSExtension">
+	<Product Id="*" Name="ProcessDashboard" Language="1033" Version="1.0.0.0" Manufacturer="BeckmanCoulter" UpgradeCode="c5303161-741a-4075-be23-7ff87f5dd752">
+		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+		<MediaTemplate EmbedCab="yes" />
+
+    <PropertyRef Id="VS2015DEVENV" />
+
+    <Condition Message="Microsoft Visual Studio 2015 is not installed. It is mandatory in order to install this product to have a valid Visual Studio 2015.">
+      <![CDATA[Installed OR VS2015DEVENV]]>
+    </Condition>
+    
+		<Feature Id="ProductFeature" Title="ProcessDashboardVSExntensionInstaller" Level="1">
+			<ComponentGroupRef Id="ProductComponents" />
+		</Feature>
+	</Product>
+
+	<Fragment>
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFilesFolder">
+				<Directory Id="INSTALLFOLDER" Name="ProcessDashboardVSExntensionInstaller" />
+			</Directory>
+		</Directory>
+	</Fragment>
+
+  <Fragment>
+    <?define SourcePath.Bin = "..\bin" ?>
+    <Component Id="ProcessDashboardComponents" Guid="{F6D108A8-778B-4C17-9EC9-FD0462408F38}" Directory="INSTALLFOLDER">
+      <VSExtension:VsixPackage File="ProcesssDashboardExtension" PackageId="Process_DashboardToolBar.Singh, Vinay K.eac0234b-e259-4d20-9322-0a5806bb105d" Target="professional" TargetVersion="14.0" Vital="yes" Permanent="no" />
+          <File Id="ProcesssDashboardExtension" Name="Process DashboardToolBar.vsix"  Source="$(var.SourcePath.Bin)\Process DashboardToolBar.vsix" />
+    </Component>
+  </Fragment>
+
+	<Fragment>
+		<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+			<!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. -->
+			<!-- <Component Id="ProductComponent"> -->
+				<!-- TODO: Insert files, registry keys, and other resources here. -->
+			<!-- </Component> -->
+      <ComponentRef Id="ProcessDashboardComponents" />
+		</ComponentGroup>
+	</Fragment>
+</Wix>
