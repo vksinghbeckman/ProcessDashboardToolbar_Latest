@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Process DashboardToolBar", "Process DashboardToolBar\Process DashboardToolBar.csproj", "{BD4322CE-AADA-42CB-BBB4-5601A2D9CED7}"
 EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "ProcessDashboardVSExntensionInstaller", "ProcessDashboardVSExntensionInstaller\ProcessDashboardVSExntensionInstaller.wixproj", "{D4DABA0A-E677-4D9E-8D4C-4D6D3202AA00}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BD4322CE-AADA-42CB-BBB4-5601A2D9CED7} = {BD4322CE-AADA-42CB-BBB4-5601A2D9CED7}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
